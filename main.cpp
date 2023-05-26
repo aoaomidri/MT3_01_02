@@ -19,6 +19,10 @@ Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMat
 
 }
 
+Vector3 Project(const Vector3& v1, const Vector3& v2) {
+
+}
+
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 
 	const float kGridHalfWidth = 2.0f;
@@ -61,7 +65,7 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 }
 
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	const uint32_t kSubdivision = 16;
+	const uint32_t kSubdivision = 8;
 	const float kLatEvery = float(M_PI / kSubdivision);//緯度一つ分の角度
 	const float kLonEvery = float((M_PI * 2.0f) / kSubdivision);//経度一つ分の角度
 	//緯度の方向に分割-π/2～π/2
@@ -104,6 +108,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			0.1f
 	};
 	uint32_t color = 0x000000FF;
+
+	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
+	Vector3 point{ -1.5f,0.6f,0.6f };
+
+	Vector3 project = { 0.0f };
+	Vector3 closestPoint = { 0.0f };
+
+	Sphere pointSphere = { point,0.01f };
+	Sphere closestPointSphere{ closestPoint,0.01f };
+
+	Vector3 start = { 0.0f };
+	Vector3 end = { 0.0f};
+
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -122,6 +139,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 projectionMatrix = matrix->MakePerspectiveFovMatrix(0.45f, (1280.0f / 720.0f), 0.1f, 100.0f);
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
+
+
 
 		
 		ImGui::Begin("Window");
