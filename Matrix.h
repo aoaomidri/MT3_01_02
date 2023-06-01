@@ -56,7 +56,9 @@ public:
 	Matrix4x4 Multiply(const Matrix4x4& mat1, const Matrix4x4& mat2);
 
 	//正規化
-	Vector3 Normalize(const Vector3& v);
+	const Vector3 Normalize(const Vector3& v);
+	//長さだけ
+	float Length(const Vector3& v);
 
 	//透視投影行列
 	Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip);

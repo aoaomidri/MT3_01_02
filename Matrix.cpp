@@ -221,7 +221,7 @@ Matrix::MakeAffineMatrix(const Vector3& scale_, const Vector3& rot, const Vector
 }
 
 
-Vector3 Matrix::Normalize(const Vector3& v) {
+const Vector3 Matrix::Normalize(const Vector3& v) {
 	Vector3 result{ 0, 0, 0 };
 	float bulletNorm = static_cast<float>(sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z)));
 
@@ -234,6 +234,14 @@ Vector3 Matrix::Normalize(const Vector3& v) {
 		};
 	}
 
+	return result;
+
+}
+
+float Matrix::Length(const Vector3& v) {
+	float result{ 0.0f };
+	float bulletNorm = static_cast<float>(sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z)));
+	result = bulletNorm;
 	return result;
 
 }
@@ -251,6 +259,7 @@ Vector3 Matrix::Transform(const Vector3& v, const Matrix4x4& m) {
 	result.z /= w;
 	return result;
 }
+
 
 
 Matrix4x4 Matrix::MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip) {

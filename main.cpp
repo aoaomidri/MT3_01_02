@@ -19,9 +19,7 @@ Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMat
 
 }
 
-Vector3 Project(const Vector3& v1, const Vector3& v2) {
 
-}
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 
@@ -92,6 +90,62 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
+Vector3 Add(const Vector3& Vec1, const Vector3& Vec2) {
+	Vector3 result;
+	result.x = Vec1.x + Vec2.x;
+	result.y = Vec1.y + Vec2.y;
+	result.z = Vec1.z + Vec2.z;
+	return result;
+}
+
+Vector3 Subtract(const Vector3& Vec1, const Vector3& Vec2) {
+	Vector3 result;
+	result.x = Vec1.x - Vec2.x;
+	result.y = Vec1.y - Vec2.y;
+	result.z = Vec1.z - Vec2.z;
+	return result;
+}
+
+Vector3 Mult(const Vector3& Vec1, const Vector3& Vec2) {
+	Vector3 result;
+	result.x = Vec1.x * Vec2.x;
+	result.y = Vec1.y * Vec2.y;
+	result.z = Vec1.z * Vec2.z;
+	return result;
+}
+
+// スカラー倍
+Vector3 Multiply(float scalar, const Vector3 & Vec) {
+	Vector3 result;
+	result.x = Vec.x * scalar;
+	result.y = Vec.y * scalar;
+	result.z = Vec.z * scalar;
+	return result;
+}
+//内積
+float Dot(const Vector3& Vec1, const Vector3& Vec2) {
+	float result;
+	result = Vec1.x * Vec2.x + Vec1.y * Vec2.y + Vec1.z * Vec2.z;
+	return result;
+}
+
+Vector3 Project(const Vector3& v1,const Vector3& v2) {
+	Vector3 result{ 0 };
+	Matrix* matrix = new Matrix;
+	result = Multiply(Dot(v1, matrix->Normalize(v2)), matrix->Normalize(v2));
+
+	return result;
+}
+
+Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
+	Vector3 result{ 0.0f };
+	Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
+	result.x = segment.origin.x + project.x;
+	result.y = segment.origin.y + project.y;
+	result.z = segment.origin.z + project.z;
+	return result;
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ライブラリの初期化
@@ -116,7 +170,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 closestPoint = { 0.0f };
 
 	Sphere pointSphere = { point,0.01f };
-	Sphere closestPointSphere{ closestPoint,0.01f };
+	
 
 	Vector3 start = { 0.0f };
 	Vector3 end = { 0.0f};
@@ -139,15 +193,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 projectionMatrix = matrix->MakePerspectiveFovMatrix(0.45f, (1280.0f / 720.0f), 0.1f, 100.0f);
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
-
-
-
+		Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
+		Vector3 closestPoint = ClosestPoint(point, segment);
+		Sphere closestPointSphere{ closestPoint,0.02f };
+		start = TransScreen(segment.origin, viewProjectionMatrix, viewportMatrix);
+		end = TransScreen(Add(segment.origin, segment.diff), viewProjectionMatrix, viewportMatrix);
 		
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTransform.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("SphereCenter", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("SphereRadius", &sphere.radius, 0.01f);
+		ImGui::DragFloat3("SphereCenter", &project.x, 0.01f);
+		
 		ImGui::End();
 		///
 		/// ↑更新処理ここまで
@@ -156,8 +212,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
+		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, color);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
+		DrawSphere(pointSphere, viewProjectionMatrix, viewportMatrix, RED);
+		DrawSphere(closestPointSphere, viewProjectionMatrix, viewportMatrix, BLACK);
 		
 		/// ↑描画処理ここまで
 		///
