@@ -1,12 +1,6 @@
 ﻿#pragma once
-#include "Vector3.h"
+#include "Vector.h"
 #include"Matrix4x4.h"
-#define _USE_MATH_DEFINES
-#include<math.h>
-#include <Novice.h>
-#include<stdint.h>
-#include<iostream>
-
 
 class Matrix {
 public:
@@ -40,7 +34,6 @@ private:
 public:
 	void Update();
 
-	Vector3 Cross(const Vector3& vA, const Vector3& vB);
 
 	Matrix4x4 MakeAffineMatrix(const Vector3& scale_, const Vector3& rot, const Vector3& translate_);
 	Matrix4x4 MakeScaleMatrix(const Vector3& scale_);
@@ -55,10 +48,6 @@ public:
 	////積
 	Matrix4x4 Multiply(const Matrix4x4& mat1, const Matrix4x4& mat2);
 
-	//正規化
-	const Vector3 Normalize(const Vector3& v);
-	//長さだけ
-	float Length(const Vector3& v);
 
 	//透視投影行列
 	Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip);

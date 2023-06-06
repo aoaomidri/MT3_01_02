@@ -32,17 +32,6 @@ Matrix::Matrix() {
 void Matrix::Update() {
 }
 
-Vector3 Matrix::Cross(const Vector3& vA, const Vector3& vB) {
-	Vector3 result{};
-
-	result = {
-		(vA.y * vB.z) - (vA.z * vB.y),
-		(vA.z * vB.x) - (vA.x * vB.z),
-		(vA.x * vB.y) - (vA.y * vB.x)
-	};
-
-	return result;
-}
 
 
 ////積
@@ -224,30 +213,6 @@ Matrix::MakeAffineMatrix(const Vector3& scale_, const Vector3& rot, const Vector
 }
 
 
-const Vector3 Matrix::Normalize(const Vector3& v) {
-	Vector3 result{ 0, 0, 0 };
-	float bulletNorm = static_cast<float>(sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z)));
-
-	if (bulletNorm != 0.0f) {
-
-		result = {
-			(v.x / bulletNorm),
-			(v.y / bulletNorm),
-			(v.z / bulletNorm)
-		};
-	}
-
-	return result;
-
-}
-
-float Matrix::Length(const Vector3& v) {
-	float result{ 0.0f };
-	float bulletNorm = static_cast<float>(sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z)));
-	result = bulletNorm;
-	return result;
-
-}
 
 Vector3 Matrix::Transform(const Vector3& v, const Matrix4x4& m) {
 	Vector3 result{

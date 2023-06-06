@@ -5,6 +5,7 @@
 struct Sphere{
 	Vector3 center;
 	float radius;
+	uint32_t color;
 };
 
 struct Line {
@@ -22,7 +23,7 @@ struct Segment {
 	Vector3 diff;//終点への差分ベクトル
 };
 
-void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 

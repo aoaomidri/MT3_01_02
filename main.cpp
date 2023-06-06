@@ -19,8 +19,6 @@ Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMat
 
 }
 
-
-
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 
 	const float kGridHalfWidth = 2.0f;
@@ -62,7 +60,7 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 	}
 }
 
-void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 	const uint32_t kSubdivision = 8;
 	const float kLatEvery = float(M_PI / kSubdivision);//緯度一つ分の角度
 	const float kLonEvery = float((M_PI * 2.0f) / kSubdivision);//経度一つ分の角度
@@ -84,8 +82,8 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 			b = TransScreen(b, viewProjectionMatrix, viewportMatrix);
 			c = TransScreen(c, viewProjectionMatrix, viewportMatrix);
 			//ab,acで線を引く
-			Novice::DrawLine(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(b.x), static_cast<int>(b.y), color);
-			Novice::DrawLine(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(c.x), static_cast<int>(c.y), color);
+			Novice::DrawLine(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(b.x), static_cast<int>(b.y), sphere.color);
+			Novice::DrawLine(static_cast<int>(a.x), static_cast<int>(a.y), static_cast<int>(c.x), static_cast<int>(c.y), sphere.color);
 		}
 	}
 }
@@ -131,8 +129,8 @@ float Dot(const Vector3& Vec1, const Vector3& Vec2) {
 
 Vector3 Project(const Vector3& v1,const Vector3& v2) {
 	Vector3 result{ 0 };
-	Matrix* matrix = new Matrix;
-	result = Multiply(Dot(v1, matrix->Normalize(v2)), matrix->Normalize(v2));
+	Vector* vec = new Vector;
+	result = Multiply(Dot(v1, vec->Normalize(v2)), vec->Normalize(v2));
 
 	return result;
 }
@@ -146,6 +144,20 @@ Vector3 ClosestPoint(const Vector3& point, const Segment& segment) {
 	return result;
 }
 
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	Vector* vec = new Vector;
+	float distance = vec->Length(s1.center - s2.center);
+
+	if (distance <= s1.radius + s2.radius) {
+		return true;
+	}
+	else {
+		return false;
+	}
+
+
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ライブラリの初期化
@@ -155,26 +167,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 	Matrix* matrix = new Matrix;
+	Vector* vec = new Vector;
 	Vector3 cameraTransform = { 0.0f,1.9f,-6.49f };
 	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
-	Sphere sphere = {
-			{0.0f,0.0f,0.0f},
-			0.1f
+	Sphere sphere1 = {
+			{-1.0f,0.0f,0.0f},
+			0.5f,
+			BLACK
 	};
-	uint32_t color = 0x000000FF;
-
-	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
-	Vector3 point{ -1.5f,0.6f,0.6f };
-
-	Vector3 project = { 0.0f };
-	Vector3 closestPoint = { 0.0f };
-
-	Sphere pointSphere = { point,0.01f };
-	
-
-	Vector3 start = { 0.0f };
-	Vector3 end = { 0.0f};
-
+	Sphere sphere2 = {
+			{1.0f,0.0f,0.0f},
+			0.5f,
+			BLACK
+	};
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -193,17 +198,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 projectionMatrix = matrix->MakePerspectiveFovMatrix(0.45f, (1280.0f / 720.0f), 0.1f, 100.0f);
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
-		Vector3 project = Project(Subtract(point, segment.origin), segment.diff);
-		Vector3 closestPoint = ClosestPoint(point, segment);
-		Sphere closestPointSphere{ closestPoint,0.02f };
-		start = TransScreen(segment.origin, viewProjectionMatrix, viewportMatrix);
-		end = TransScreen(Add(segment.origin, segment.diff), viewProjectionMatrix, viewportMatrix);
+
+		if (IsCollision(sphere1, sphere2)) {
+			sphere1.color = RED;
+		}
+		else {
+			sphere1.color = BLACK;
+		}
 		
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTransform.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("SphereCenter", &project.x, 0.01f);
-		
+		ImGui::DragFloat3("Sphere1Center", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat("Sphere1Radius", &sphere1.radius, 0.01f);
+		ImGui::DragFloat3("Sphere2Center", &sphere2.center.x, 0.01f);
+		ImGui::DragFloat("Sphere2Radius", &sphere2.radius, 0.01f);
 		ImGui::End();
 		///
 		/// ↑更新処理ここまで
@@ -214,9 +223,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), WHITE);
-		DrawSphere(pointSphere, viewProjectionMatrix, viewportMatrix, RED);
-		DrawSphere(closestPointSphere, viewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
 		
 		/// ↑描画処理ここまで
 		///
