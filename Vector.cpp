@@ -36,3 +36,15 @@ float Vector::Length(const Vector3& v) {
 	return result;
 
 }
+
+float Vector::VectorAngle(const Vector3& v1, const Vector3& v2) {
+	float result = 0;
+	float dot = ((v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z));
+	float denominatorA = sqrtf((v1.x * v1.x) + (v1.y * v1.y) + (v1.z * v1.z));
+	float denominatorB = sqrtf((v2.x * v2.x) + (v2.y * v2.y) + (v2.z * v2.z));
+
+	result = (dot / (denominatorA * denominatorB));
+
+
+	return std::acosf(result);
+}

@@ -23,6 +23,6 @@ public:
 	//長さだけ
 	float Length(const Vector3& v);
 
-
+	float VectorAngle(const Vector3& v1, const Vector3& v2);
 };
 

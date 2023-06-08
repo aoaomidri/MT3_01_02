@@ -180,6 +180,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			0.5f,
 			BLACK
 	};
+
+	Vector3 vector1 = { 1,2,1 };
+	Vector3 vector2 = { -2,2,4 };
+	float result = 0.0f;
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -199,6 +203,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
+		result = vec->VectorAngle(vector1, vector2) * 180.0f / static_cast<float>(M_PI);
+
 		if (IsCollision(sphere1, sphere2)) {
 			sphere1.color = RED;
 		}
@@ -214,6 +220,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Sphere2Center", &sphere2.center.x, 0.01f);
 		ImGui::DragFloat("Sphere2Radius", &sphere2.radius, 0.01f);
 		ImGui::End();
+
+		Novice::ScreenPrintf(0, 0, "Result %.5f", result);
 		///
 		/// ↑更新処理ここまで
 		///
