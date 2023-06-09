@@ -29,12 +29,34 @@ const Vector3 Vector::Normalize(const Vector3& v) {
 
 }
 
+Vector3 Vector::Perpendicular(const Vector3& vector) {
+	if (vector.x != 0.0f || vector.y != 0.0f) {
+		return { -vector.y,vector.x,0.0f };
+	}
+	return{ 0.0f,-vector.z,vector.y };
+
+}
+
+Vector3 Vector::Multiply(float scalar, const Vector3& Vec) {
+	Vector3 result{};
+	result.x = Vec.x * scalar;
+	result.y = Vec.y * scalar;
+	result.z = Vec.z * scalar;
+	return result;
+}
+
 float Vector::Length(const Vector3& v) {
 	float result{ 0.0f };
 	float bulletNorm = static_cast<float>(sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z)));
 	result = bulletNorm;
 	return result;
 
+}
+
+float Vector::planeEquation(const Vector3& normal, const Vector3& vector) {
+	float result{};
+	result = (normal.x * vector.x) + (normal.y * vector.y) + (normal.z * vector.z);
+	return result;
 }
 
 float Vector::VectorAngle(const Vector3& v1, const Vector3& v2) {
@@ -47,4 +69,10 @@ float Vector::VectorAngle(const Vector3& v1, const Vector3& v2) {
 
 
 	return std::acosf(result);
+}
+
+float Vector::Dot(const Vector3& v1, const Vector3& v2) {
+	float result = 0;
+	result = (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
+	return result;
 }

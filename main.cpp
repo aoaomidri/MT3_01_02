@@ -88,6 +88,28 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 	}
 }
 
+void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector* vec = new Vector;
+	Vector3 center = vec->Multiply(plane.distance, plane.normal);
+	Vector3 perpendiculars[4]{};
+	perpendiculars[0] = vec->Normalize(vec->Perpendicular(plane.normal));
+	perpendiculars[1] = { -perpendiculars[0].x,-perpendiculars[0].y,-perpendiculars[0].z };
+	perpendiculars[2] = vec->Cross(plane.normal, perpendiculars[0]);
+	perpendiculars[3] = { -perpendiculars[2].x,-perpendiculars[2].y,-perpendiculars[2].z };
+
+	Vector3 points[4]{};
+	for (int32_t index = 0; index < 4; ++index) {
+		Vector3 extend = vec->Multiply(2.0f, perpendiculars[index]);
+		Vector3 point = center + extend;
+		points[index] = TransScreen(point, viewProjectionMatrix, viewportMatrix);
+	}
+	Novice::DrawLine(static_cast<int>(points[0].x), static_cast<int>(points[0].y), static_cast<int>(points[2].x), static_cast<int>(points[2].y), color);
+	Novice::DrawLine(static_cast<int>(points[1].x), static_cast<int>(points[1].y), static_cast<int>(points[3].x), static_cast<int>(points[3].y), color);
+	Novice::DrawLine(static_cast<int>(points[3].x), static_cast<int>(points[3].y), static_cast<int>(points[0].x), static_cast<int>(points[0].y), color);
+	Novice::DrawLine(static_cast<int>(points[2].x), static_cast<int>(points[2].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
+
+}
+
 Vector3 Add(const Vector3& Vec1, const Vector3& Vec2) {
 	Vector3 result;
 	result.x = Vec1.x + Vec2.x;
@@ -112,14 +134,7 @@ Vector3 Mult(const Vector3& Vec1, const Vector3& Vec2) {
 	return result;
 }
 
-// スカラー倍
-Vector3 Multiply(float scalar, const Vector3 & Vec) {
-	Vector3 result;
-	result.x = Vec.x * scalar;
-	result.y = Vec.y * scalar;
-	result.z = Vec.z * scalar;
-	return result;
-}
+
 //内積
 float Dot(const Vector3& Vec1, const Vector3& Vec2) {
 	float result;
@@ -130,7 +145,7 @@ float Dot(const Vector3& Vec1, const Vector3& Vec2) {
 Vector3 Project(const Vector3& v1,const Vector3& v2) {
 	Vector3 result{ 0 };
 	Vector* vec = new Vector;
-	result = Multiply(Dot(v1, vec->Normalize(v2)), vec->Normalize(v2));
+	result = vec->Multiply(Dot(v1, vec->Normalize(v2)), vec->Normalize(v2));
 
 	return result;
 }
@@ -158,6 +173,18 @@ bool IsCollision(const Sphere& s1, const Sphere& s2) {
 
 }
 
+bool IsCollision(const Sphere& sphere, const Plane& plane) {
+	Vector* vec = new Vector;
+	//平面と点の距離
+	float k = sqrtf(powf(vec->Dot(plane.normal, sphere.center) - plane.distance, 2.0f));
+
+	Novice::ScreenPrintf(0, 0, "distance = %.1f", k);
+	if (k <= sphere.radius) {
+		return true;
+	}
+	return false;
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ライブラリの初期化
@@ -173,12 +200,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Sphere sphere1 = {
 			{-1.0f,0.0f,0.0f},
 			0.5f,
-			BLACK
+			WHITE
 	};
-	Sphere sphere2 = {
-			{1.0f,0.0f,0.0f},
-			0.5f,
-			BLACK
+
+	Plane plane{
+		{0.0f,1.0f,0.0f},
+		1.0f
 	};
 
 	Vector3 vector1 = { 1,2,1 };
@@ -203,13 +230,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		result = vec->VectorAngle(vector1, vector2) * 180.0f / static_cast<float>(M_PI);
-
-		if (IsCollision(sphere1, sphere2)) {
+		if (IsCollision(sphere1, plane)) {
 			sphere1.color = RED;
 		}
 		else {
-			sphere1.color = BLACK;
+			sphere1.color = WHITE;
 		}
 		
 		ImGui::Begin("Window");
@@ -217,11 +242,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("Sphere1Center", &sphere1.center.x, 0.01f);
 		ImGui::DragFloat("Sphere1Radius", &sphere1.radius, 0.01f);
-		ImGui::DragFloat3("Sphere2Center", &sphere2.center.x, 0.01f);
-		ImGui::DragFloat("Sphere2Radius", &sphere2.radius, 0.01f);
+		ImGui::DragFloat3("Plane", & plane.normal.x, 0.01f);
+
 		ImGui::End();
 
-		Novice::ScreenPrintf(0, 0, "Result %.5f", result);
 		///
 		/// ↑更新処理ここまで
 		///
@@ -232,7 +256,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
+
+		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 		
 		/// ↑描画処理ここまで
 		///
