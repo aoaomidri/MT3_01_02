@@ -2,6 +2,7 @@
 #include"Matrix.h"
 
 
+
 struct Sphere{
 	Vector3 center;
 	float radius;
@@ -12,17 +13,17 @@ struct Plane {
 	Vector3 normal;//法線
 	float distance;//距離
 };
-
+//直線
 struct Line {
 	Vector3 origin;//始点
 	Vector3 diff;//終点への差分ベクトル
 };
-
+//半直線
 struct Ray {
 	Vector3 origin;//始点
 	Vector3 diff;//終点への差分ベクトル
 };
-
+//線分
 struct Segment {
 	Vector3 origin;//始点
 	Vector3 diff;//終点への差分ベクトル
@@ -37,6 +38,8 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 bool IsCollision(const Sphere& s1, const Sphere& s2);
 //弾と平面が当たったら
 bool IsCollision(const Sphere& sphere, const Plane& plane);
+//線分と平面の当たり判定
+bool IsCollision(const Segment& segment, const Plane& plane);
 
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
