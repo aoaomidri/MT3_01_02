@@ -29,18 +29,26 @@ struct Segment {
 	Vector3 diff;//終点への差分ベクトル
 };
 
+//三角形
+struct Triangle {
+	Vector3 vertices[3];
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+
+void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 //球と球があたったら
 bool IsCollision(const Sphere& s1, const Sphere& s2);
 //弾と平面が当たったら
 bool IsCollision(const Sphere& sphere, const Plane& plane);
 //線分と平面の当たり判定
 bool IsCollision(const Segment& segment, const Plane& plane);
-
+//三角形の平面と線分の当たり判定
+bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 Vector3 Project(const Vector3& v1, const Vector3& v2);
