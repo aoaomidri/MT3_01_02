@@ -261,7 +261,7 @@ bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4
 	if (vec->Dot(cross01, normal) >= 0.0f &&
 		vec->Dot(cross12, normal) >= 0.0f &&
 		vec->Dot(cross20, normal) >= 0.0f &&
-		t>=0.0f&&t<=1.0f) {
+		t >= 0.0f && t <= 1.0f) {
 		
 		return true;
 	}
