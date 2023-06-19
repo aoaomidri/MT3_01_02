@@ -126,6 +126,39 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 points[8]{};
+
+	points[0] = aabb.min;
+	points[1] = { aabb.min.x,aabb.min.y,aabb.max.z };
+	points[2] = { aabb.max.x,aabb.min.y,aabb.min.z };
+	points[3] = { aabb.max.x,aabb.min.y,aabb.max.z };
+	points[4] = { aabb.min.x,aabb.max.y,aabb.min.z };
+	points[5] = { aabb.min.x,aabb.max.y,aabb.max.z };
+	points[6] = { aabb.max.x,aabb.max.y,aabb.min.z };
+	points[7] = aabb.max;
+
+	for (int i = 0; i < 8; i++) {
+		points[i] = TransScreen(points[i], viewProjectionMatrix, viewportMatrix);
+	}
+	//底面
+	Novice::DrawLine(static_cast<int>(points[0].x), static_cast<int>(points[0].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
+	Novice::DrawLine(static_cast<int>(points[1].x), static_cast<int>(points[1].y), static_cast<int>(points[3].x), static_cast<int>(points[3].y), color);
+	Novice::DrawLine(static_cast<int>(points[3].x), static_cast<int>(points[3].y), static_cast<int>(points[2].x), static_cast<int>(points[2].y), color);
+	Novice::DrawLine(static_cast<int>(points[2].x), static_cast<int>(points[2].y), static_cast<int>(points[0].x), static_cast<int>(points[0].y), color);
+	//上面
+	Novice::DrawLine(static_cast<int>(points[4].x), static_cast<int>(points[4].y), static_cast<int>(points[5].x), static_cast<int>(points[5].y), color);
+	Novice::DrawLine(static_cast<int>(points[5].x), static_cast<int>(points[5].y), static_cast<int>(points[7].x), static_cast<int>(points[7].y), color);
+	Novice::DrawLine(static_cast<int>(points[7].x), static_cast<int>(points[7].y), static_cast<int>(points[6].x), static_cast<int>(points[6].y), color);
+	Novice::DrawLine(static_cast<int>(points[6].x), static_cast<int>(points[6].y), static_cast<int>(points[4].x), static_cast<int>(points[4].y), color);
+	//側面
+	Novice::DrawLine(static_cast<int>(points[4].x), static_cast<int>(points[4].y), static_cast<int>(points[0].x), static_cast<int>(points[0].y), color);
+	Novice::DrawLine(static_cast<int>(points[5].x), static_cast<int>(points[5].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
+	Novice::DrawLine(static_cast<int>(points[7].x), static_cast<int>(points[7].y), static_cast<int>(points[3].x), static_cast<int>(points[3].y), color);
+	Novice::DrawLine(static_cast<int>(points[6].x), static_cast<int>(points[6].y), static_cast<int>(points[2].x), static_cast<int>(points[2].y), color);
+
+}
+
 Vector3 Add(const Vector3& Vec1, const Vector3& Vec2) {
 	Vector3 result;
 	result.x = Vec1.x + Vec2.x;
@@ -270,6 +303,19 @@ bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4
 	}
 }
 
+bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
+	if ((aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x)&&
+		(aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y)&&
+		(aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z))
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ライブラリの初期化
@@ -299,6 +345,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		1.0f
 	};
 
+	Vector3 moveAABB1 = {};
+
+	AABB aabb1{
+		.min{-0.5f,-0.5f,-0.5f},
+		.max{0.0f,0.0f,0.0f}
+	};
+	
+
+	Vector3 moveAABB2 = {};
+
+	AABB aabb2{
+		.min{0.2f,0.2f,0.2f},
+		.max{1.0f,1.0f,1.0f}
+	};
+
+	
+
 	Segment segment_{ {-1.0f,-0.5f,0.0f},{1.5f,1.0f,1.0f} };
 	
 	// ウィンドウの×ボタンが押されるまでループ
@@ -319,25 +382,38 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
-		Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);
+		/*Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
+		Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);*/
 
-		if (IsCollision( triangle,segment_, viewProjectionMatrix, viewportMatrix)) {
-			triangleColor = RED;
+		if (IsCollision(aabb1,aabb2)) {
+			color = RED;
 		}
 		else {
-			triangleColor = WHITE;
+			color = WHITE;
 		}
+
 		
+		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
+		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
+		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
+		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
+		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
+
+		aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
+		aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
+		aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
+		aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
+		aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
+		aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
+
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTransform.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("Triangle.v0", &plane.normal.x, 0.01f);
-		ImGui::DragFloat3("Triangle.v1", &plane.normal.x, 0.01f);
-		ImGui::DragFloat3("Triangle.v2", &plane.normal.x, 0.01f);
-		ImGui::DragFloat3("Segment.origin", &segment_.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment.diff", &segment_.diff.x, 0.01f);
-		
+		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
+		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
+		ImGui::DragFloat3("AABB2.min", &aabb2.min.x, 0.01f);
+		ImGui::DragFloat3("AABB2.max", &aabb2.max.x, 0.01f);
 
 		ImGui::End();
 
@@ -351,11 +427,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+		DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, color);
+
+		DrawAABB(aabb2,viewProjectionMatrix, viewportMatrix, color);
+
+		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
-		DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangleColor);
+		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangleColor);
 		
 		/// ↑描画処理ここまで
 		///

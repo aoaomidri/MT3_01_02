@@ -34,6 +34,12 @@ struct Triangle {
 	Vector3 vertices[3];
 };
 
+//AABB
+struct AABB {
+	Vector3 min;//最小点
+	Vector3 max;//最大点
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
@@ -41,6 +47,9 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 
 void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+
+void DrawAABB(const AABB& aabb,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+
 //球と球があたったら
 bool IsCollision(const Sphere& s1, const Sphere& s2);
 //弾と平面が当たったら
@@ -49,6 +58,9 @@ bool IsCollision(const Sphere& sphere, const Plane& plane);
 bool IsCollision(const Segment& segment, const Plane& plane);
 //三角形の平面と線分の当たり判定
 bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
+//AABB同士の当たり判定
+bool IsCollision(const AABB& aabb1, const AABB& aabb2);
+
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 Vector3 Project(const Vector3& v1, const Vector3& v2);
