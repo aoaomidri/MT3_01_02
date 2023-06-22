@@ -383,11 +383,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.color = WHITE
 	};
 	
-	AABB aabb2{
+	/*AABB aabb2{
 		.min{0.2f,0.2f,0.2f},
 		.max{1.0f,1.0f,1.0f},
 		.color = WHITE
-	};
+	};*/
 
 	Segment segment_{ {-1.0f,-0.5f,0.0f},{1.5f,1.0f,1.0f} };
 
@@ -460,7 +460,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		if (IsCollision(aabb1,aabb2)){
+		if (IsCollision(sphere,aabb1)){
 			aabb1.color = RED;
 		}
 		else {
@@ -474,20 +474,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
 		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
 
-		aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
-		aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
-		aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
-		aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
-		aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
-		aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
-
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
-		ImGui::DragFloat3("AABB2.min", &aabb2.min.x, 0.01f);
-		ImGui::DragFloat3("AABB2.max", &aabb2.max.x, 0.01f);
-		//ImGui::DragFloat3("Sphere.center", &sphere.center.x, 0.01f);
-		//ImGui::DragFloat("Sphere.radius", &sphere.radius, 0.01f);
+		ImGui::DragFloat3("Sphere.center", &sphere.center.x, 0.01f);
+		ImGui::DragFloat("Sphere.radius", &sphere.radius, 0.01f);
 		ImGui::End();
 
 		///
@@ -502,9 +493,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
-		DrawAABB(aabb2, viewProjectionMatrix, viewportMatrix, aabb2.color);
-
-		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 
