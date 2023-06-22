@@ -1,11 +1,13 @@
 #include"main.h"
+#include "AxisIndicator.h"
 #include<imgui.h>
+#include<algorithm>
 
 const char kWindowTitle[] = "LE2A_20_ムラカミ_アオイ";
 
 
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
-	Matrix* matrix = new Matrix;
+	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();
 	Vector3 kLocalVertices = { 0.0f,0.0f,0.0f };
 	Matrix4x4 worldMatrix = { 0.0f };
 	Matrix4x4 worldViewProjectionMatrix = { 0.0f };
@@ -62,14 +64,14 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 }
 
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
-	const uint32_t kSubdivision = 8;
+	const uint32_t kSubdivision = 16;
 	const float kLatEvery = float(M_PI / kSubdivision);//緯度一つ分の角度
 	const float kLonEvery = float((M_PI * 2.0f) / kSubdivision);//経度一つ分の角度
 	//緯度の方向に分割-π/2～π/2
-	for (uint32_t latIndex = 0; latIndex <= kSubdivision; ++latIndex){
-		float lat = -float( ((M_PI) / 2.0f) + (kLatEvery * latIndex));//現在の緯度(θ)
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex){
+		float lat = float(-M_PI / 2.0f + kLatEvery * latIndex);//現在の緯度(θ)
 		//経度の方向に分割 0～2π
-		for (uint32_t lonIndex = 0; lonIndex <= kSubdivision; ++lonIndex){
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex){
 			float lon = lonIndex * kLonEvery;//現在の経度(φ)
 			//world座標系でのa,b,cを求める
 			Vector3 a, b, c;
@@ -90,7 +92,7 @@ void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, con
 }
 
 void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	Vector* vec = new Vector;
+	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
 	Vector3 center = vec->Multiply(plane.distance, plane.normal);
 	Vector3 perpendiculars[4]{};
 	perpendiculars[0] = vec->Normalize(vec->Perpendicular(plane.normal));
@@ -251,7 +253,7 @@ bool IsCollision(const Segment& segment, const Plane& plane) {
 }
 
 bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
-	Vector* vec = new Vector;
+	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
 
 	Sphere sphere = {
 		{0.0f,0.0f,0.0f},
@@ -315,6 +317,26 @@ bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
 	}
 }
 
+bool IsCollision(const Sphere& sphere, const AABB& aabb) {
+	std::unique_ptr<Vector> vec = nullptr;
+	vec = std::make_unique<Vector>();
+	//最近接点を求める
+	Vector3 closestPoint{
+		std::clamp(sphere.center.x,aabb.min.x,aabb.max.x),
+		std::clamp(sphere.center.y,aabb.min.y,aabb.max.y),
+		std::clamp(sphere.center.z,aabb.min.z,aabb.max.z)
+	};
+
+	float distance = vec->Length(closestPoint - sphere.center);
+
+	if (distance <= sphere.radius) {
+		return true;
+	}
+	else {
+		return false;
+	}
+
+}
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -325,44 +347,53 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	Matrix* matrix = new Matrix;
-	Vector* vec = new Vector;
-	Vector3 cameraTransform = { 0.0f,2.85f,-10.0f };
+	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();	
+
+	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
+	
+
+
+	Vector3 cameraTransform = { 0.0f,0.0f,0.0f };
 	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
 	Triangle triangle = {};
 	triangle.vertices[0] = { -1.0f,0.0f,0.0f };
 	triangle.vertices[1] = { 0.0f,1.0f,0.0f };
 	triangle.vertices[2] = { 1.0f,0.0f,0.0f };
-
-	
+		
 
 	uint32_t color = WHITE;
 
 	uint32_t triangleColor = WHITE;
-
+		
 	Plane plane{
 		{0.0f,1.0f,0.0f},
-		1.0f
+		1.0f,
+		WHITE
 	};
 
-	Vector3 moveAABB1 = {};
+	Sphere sphere{
+		.center{1.0f,1.0f,1.0f},
+		.radius = 1.0f,
+		.color = WHITE
+	};
 
 	AABB aabb1{
 		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.0f,0.0f,0.0f}
+		.max{0.0f,0.0f,0.0f},
+		.color = WHITE
 	};
 	
-
-	Vector3 moveAABB2 = {};
-
 	AABB aabb2{
 		.min{0.2f,0.2f,0.2f},
-		.max{1.0f,1.0f,1.0f}
+		.max{1.0f,1.0f,1.0f},
+		.color = WHITE
 	};
 
-	
-
 	Segment segment_{ {-1.0f,-0.5f,0.0f},{1.5f,1.0f,1.0f} };
+
+	Vector2 localCameraPos{ 0.0f,0.0f };
+
+	float cameraLength = -8.0f;
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -376,23 +407,66 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓更新処理ここから
 		///
+		//////カメラぐるぐる
+		//左右
+		if (keys[DIK_A]) {
+			cameraRotate.y += 0.03f;
+		}
+		else if (keys[DIK_D]) {
+			cameraRotate.y -= 0.03f;
+		}
+		//上下
+		if (keys[DIK_W]) {
+			cameraRotate.x -= 0.03f;
+		}
+		else if (keys[DIK_S]) {
+			cameraRotate.x += 0.03f;
+		}
+		//ズームインorアウト
+		if (keys[DIK_E]) {
+			cameraLength += 0.1f;
+		}
+		else if (keys[DIK_Q]) {
+			cameraLength -= 0.1f;
+		}
+		//カメラの左右上下移動
+		if (keys[DIK_UP]) {
+			localCameraPos.y += 0.03f;
+		}
+		else if (keys[DIK_DOWN]) {
+			localCameraPos.y -= 0.03f;
+		}
+		//上下
+		if (keys[DIK_LEFT]) {
+			localCameraPos.x -= 0.03f;
+		}
+		else if (keys[DIK_RIGHT]) {
+			localCameraPos.x += 0.03f;
+		}
+		if (keys[DIK_R]&&!preKeys[DIK_R]){
+			cameraLength = -8.0f;
+			localCameraPos = { 0.0f,0.0f };
+			cameraRotate = { 0.26f,0.0f,0.0f };
+		}
+
+		Vector3 offset = { localCameraPos.x,localCameraPos.y,cameraLength };
+		Matrix4x4 newRotateMatrix = matrix->MakeRotateMatrix(cameraRotate);
+		offset = matrix->TransformNormal(offset, newRotateMatrix);
+		cameraTransform =/*中心とするオブジェクトのTransformを足す*/ offset;
+
 		Matrix4x4 cameraMatrix = matrix->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTransform);
 		Matrix4x4 viewMatrix = matrix->Inverce(cameraMatrix);
 		Matrix4x4 projectionMatrix = matrix->MakePerspectiveFovMatrix(0.45f, (1280.0f / 720.0f), 0.1f, 100.0f);
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		/*Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
-		Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);*/
-
-		if (IsCollision(aabb1,aabb2)) {
-			color = RED;
+		if (IsCollision(aabb1,aabb2)){
+			aabb1.color = RED;
 		}
 		else {
-			color = WHITE;
+			aabb1.color = WHITE;
 		}
 
-		
 		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
 		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
 		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
@@ -408,13 +482,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("CameraTranslate", &cameraTransform.x, 0.01f);
-		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
 		ImGui::DragFloat3("AABB2.min", &aabb2.min.x, 0.01f);
 		ImGui::DragFloat3("AABB2.max", &aabb2.max.x, 0.01f);
-
+		//ImGui::DragFloat3("Sphere.center", &sphere.center.x, 0.01f);
+		//ImGui::DragFloat("Sphere.radius", &sphere.radius, 0.01f);
 		ImGui::End();
 
 		///
@@ -427,9 +500,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, color);
+		DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
-		DrawAABB(aabb2,viewProjectionMatrix, viewportMatrix, color);
+		DrawAABB(aabb2, viewProjectionMatrix, viewportMatrix, aabb2.color);
+
+		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 

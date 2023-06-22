@@ -177,6 +177,19 @@ Matrix4x4 Matrix::MakeRotateMatrixZ(const Vector3& rot) {
 	result.m[3][3] = 1.0f;
 	return result;
 }
+
+Matrix4x4 Matrix::MakeRotateMatrix(const Vector3& rot) {
+	Matrix4x4 result{};
+	//X,Y,Z軸の回転行列の作成
+	RotateMatrixX = MakeRotateMatrixX(rot);
+	RotateMatrixY = MakeRotateMatrixY(rot);
+	RotateMatrixZ = MakeRotateMatrixZ(rot);
+
+	result = Multiply(RotateMatrixX, Multiply(RotateMatrixY, RotateMatrixZ));
+
+	return result;
+}
+
 Matrix4x4 Matrix::MakeTranslateMatrix(const Vector3& translate_) {
 	Matrix4x4 result{};
 	result.m[0][0] = 1.0f;
@@ -197,12 +210,9 @@ Matrix::MakeAffineMatrix(const Vector3& scale_, const Vector3& rot, const Vector
 
 	//スケーリング行列の作成
 	ScaleMatrix = MakeScaleMatrix(scale_);
-	//X,Y,Z軸の回転行列の作成
-	RotateMatrixX = MakeRotateMatrixX(rot);
-	RotateMatrixY = MakeRotateMatrixY(rot);
-	RotateMatrixZ = MakeRotateMatrixZ(rot);
+	
 	//回転行列の結合
-	RotateMatrixXYZ = Multiply(RotateMatrixX, Multiply(RotateMatrixY, RotateMatrixZ));
+	RotateMatrixXYZ = MakeRotateMatrix(rot);
 	//平行移動行列の作成
 	TranslateMatrix = MakeTranslateMatrix(translate_);
 
@@ -225,6 +235,16 @@ Vector3 Matrix::Transform(const Vector3& v, const Matrix4x4& m) {
 	result.x /= w;
 	result.y /= w;
 	result.z /= w;
+	return result;
+}
+
+Vector3 Matrix::TransformNormal(const Vector3& v, const Matrix4x4& m) {
+	Vector3 result{
+		v.x * m.m[0][0] + v.y * m.m[1][0] + v.z * m.m[2][0],
+		v.x * m.m[0][1] + v.y * m.m[1][1] + v.z * m.m[2][1],
+		v.x * m.m[0][2] + v.y * m.m[1][2] + v.z * m.m[2][2]
+	};
+
 	return result;
 }
 

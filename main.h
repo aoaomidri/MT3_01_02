@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include"Matrix.h"
-
+#include<memory>
 
 
 struct Sphere{
@@ -12,6 +12,7 @@ struct Sphere{
 struct Plane {
 	Vector3 normal;//法線
 	float distance;//距離
+	uint32_t color;
 };
 //直線
 struct Line {
@@ -32,12 +33,14 @@ struct Segment {
 //三角形
 struct Triangle {
 	Vector3 vertices[3];
+	uint32_t color;
 };
 
 //AABB
 struct AABB {
 	Vector3 min;//最小点
 	Vector3 max;//最大点
+	uint32_t color;
 };
 
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
@@ -50,9 +53,9 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 
 void DrawAABB(const AABB& aabb,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 
-//球と球があたったら
+//球と球の当たり判定
 bool IsCollision(const Sphere& s1, const Sphere& s2);
-//弾と平面が当たったら
+//弾と平面の当たり判定
 bool IsCollision(const Sphere& sphere, const Plane& plane);
 //線分と平面の当たり判定
 bool IsCollision(const Segment& segment, const Plane& plane);
@@ -60,6 +63,8 @@ bool IsCollision(const Segment& segment, const Plane& plane);
 bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 //AABB同士の当たり判定
 bool IsCollision(const AABB& aabb1, const AABB& aabb2);
+//AABBと球の当たり判定
+bool IsCollision(const Sphere& sphere, const AABB& aabb);
 
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 

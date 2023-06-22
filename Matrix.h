@@ -42,6 +42,8 @@ public:
 	Matrix4x4 MakeRotateMatrixY(const Vector3& rot);
 	Matrix4x4 MakeRotateMatrixZ(const Vector3& rot);
 
+	Matrix4x4 MakeRotateMatrix(const Vector3& rot);
+
 
 	Matrix4x4 MakeTranslateMatrix(const Vector3& translate_);
 
@@ -61,6 +63,7 @@ public:
 
 	//ベクトル変換
 	Vector3 Transform(const Vector3& v, const Matrix4x4& m);
-
+	//ベクトル変換
+	Vector3 TransformNormal(const Vector3& v, const Matrix4x4& m);
 
 };
