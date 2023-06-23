@@ -338,6 +338,53 @@ bool IsCollision(const Sphere& sphere, const AABB& aabb) {
 
 }
 
+bool IsCollision(const Segment& segment, const AABB& aabb) {
+	Vector3 tMin = {
+		(aabb.min.x - segment.origin.x) / segment.diff.x,
+		(aabb.min.y - segment.origin.y) / segment.diff.y,
+		(aabb.min.z - segment.origin.z) / segment.diff.z
+	};
+	Vector3 tMax = {
+		(aabb.max.x - segment.origin.x) / segment.diff.x,
+		(aabb.max.y - segment.origin.y) / segment.diff.y,
+		(aabb.max.z - segment.origin.z) / segment.diff.z
+	};
+
+	Vector3 tNear = {
+		min(tMin.x,tMax.x),
+		min(tMin.y,tMax.y),
+		min(tMin.z,tMax.z)
+	};
+
+	Vector3 tFar = {
+		max(tMin.x,tMax.x),
+		max(tMin.y,tMax.y),
+		max(tMin.z,tMax.z)
+	};
+
+	float tmin = max(max(tNear.x, tNear.y), tNear.z);
+
+	float tmax = min(min(tFar.x, tFar.y), tFar.z);
+
+	Novice::ScreenPrintf(0, 0, "tmin/tmax = %.2f", tmin / tmax);
+	Novice::ScreenPrintf(0, 20, "tmin = %.2f", tmin );
+	Novice::ScreenPrintf(0, 40, "tmax = %.2f", tmax);
+
+	float t = tmin / tmax;
+	if (tmax == 0.0f) {
+		return false;
+	}
+	
+
+	if ((tmin <= tmax) && (tmax > 0.0f) && (tmin < 1.0f)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ライブラリの初期化
@@ -350,7 +397,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();	
 
 	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
-	
 
 
 	Vector3 cameraTransform = { 0.0f,0.0f,0.0f };
@@ -379,7 +425,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	AABB aabb1{
 		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.0f,0.0f,0.0f},
+		.max{0.5f,0.5f,0.5f},
 		.color = WHITE
 	};
 	
@@ -389,7 +435,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.color = WHITE
 	};*/
 
-	Segment segment_{ {-1.0f,-0.5f,0.0f},{1.5f,1.0f,1.0f} };
+	Segment segment_{ 
+		{-0.7f,0.3f,0.0f},
+		{2.0f,-0.5f,0.0f} };
 
 	Vector2 localCameraPos{ 0.0f,0.0f };
 
@@ -460,7 +508,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		if (IsCollision(sphere,aabb1)){
+		Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
+		Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);
+
+		if (IsCollision(segment_,aabb1)){
 			aabb1.color = RED;
 		}
 		else {
@@ -477,8 +528,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
-		ImGui::DragFloat3("Sphere.center", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("Sphere.radius", &sphere.radius, 0.01f);
+		ImGui::DragFloat3("StartLinePos", &segment_.origin.x, 0.01f);
+		ImGui::DragFloat3("EndLinePos", &segment_.diff.x, 0.01f);
 		ImGui::End();
 
 		///
@@ -493,9 +544,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
-		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
+		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
-		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 

@@ -65,6 +65,8 @@ bool IsCollision(const Triangle& triangle, const Segment& segment, const Matrix4
 bool IsCollision(const AABB& aabb1, const AABB& aabb2);
 //AABBと球の当たり判定
 bool IsCollision(const Sphere& sphere, const AABB& aabb);
+//AABBと線分の当たり判定
+bool IsCollision(const Segment& segment, const AABB& aabb);
 
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
