@@ -209,8 +209,7 @@ Matrix::MakeAffineMatrix(const Vector3& scale_, const Vector3& rot, const Vector
 	Matrix4x4 result{};
 
 	//スケーリング行列の作成
-	ScaleMatrix = MakeScaleMatrix(scale_);
-	
+	ScaleMatrix = MakeScaleMatrix(scale_);	
 	//回転行列の結合
 	RotateMatrixXYZ = MakeRotateMatrix(rot);
 	//平行移動行列の作成

@@ -43,6 +43,14 @@ struct AABB {
 	uint32_t color;
 };
 
+//OBB
+struct OBB{
+	Vector3 center;//中心点
+	Vector3 orientations[3];//座標軸。正規化・直行必須
+	Vector3 size;//座標軸の長さの半分。中心から面までの距離
+	uint32_t color;
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
@@ -51,7 +59,9 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 
 void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 
-void DrawAABB(const AABB& aabb,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+
+void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 
 //球と球の当たり判定
 bool IsCollision(const Sphere& s1, const Sphere& s2);

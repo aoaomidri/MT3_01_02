@@ -6,7 +6,7 @@
 const char kWindowTitle[] = "LE2A_20_ムラカミ_アオイ";
 
 
-Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
+Vector3 TransScreen(const Vector3& transform,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();
 	Vector3 kLocalVertices = { 0.0f,0.0f,0.0f };
 	Matrix4x4 worldMatrix = { 0.0f };
@@ -23,7 +23,6 @@ Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMat
 }
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
-
 	const float kGridHalfWidth = 2.0f;
 	const uint32_t kSubdivision = 10;
 	const float kGridEvely = (kGridHalfWidth * 2.0f) / float(kSubdivision);
@@ -38,7 +37,7 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 	for (uint32_t xIndex = 0; xIndex <= kSubdivision; ++xIndex) {
 		backPosirion = { -kGridHalfWidth + (kGridEvely * xIndex),0.0f,kGridHalfWidth };
 		frontPosition = { -kGridHalfWidth + (kGridEvely * xIndex),0.0f,-kGridHalfWidth };
-		backPosirion = TransScreen(backPosirion, viewProjectionMatrix, viewportMatrix);
+		backPosirion = TransScreen(backPosirion,viewProjectionMatrix, viewportMatrix);
 		frontPosition = TransScreen(frontPosition, viewProjectionMatrix, viewportMatrix);
 		if (xIndex == 5) {
 			color = 0x000000FF;
@@ -128,7 +127,8 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 		color, kFillModeWireFrame);
 }
 
-void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+void DrawAABB(const AABB& aabb,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	
 	Vector3 points[8]{};
 
 	points[0] = aabb.min;
@@ -142,6 +142,56 @@ void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Mat
 
 	for (int i = 0; i < 8; i++) {
 		points[i] = TransScreen(points[i], viewProjectionMatrix, viewportMatrix);
+	}
+	//底面
+	Novice::DrawLine(static_cast<int>(points[0].x), static_cast<int>(points[0].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
+	Novice::DrawLine(static_cast<int>(points[1].x), static_cast<int>(points[1].y), static_cast<int>(points[3].x), static_cast<int>(points[3].y), color);
+	Novice::DrawLine(static_cast<int>(points[3].x), static_cast<int>(points[3].y), static_cast<int>(points[2].x), static_cast<int>(points[2].y), color);
+	Novice::DrawLine(static_cast<int>(points[2].x), static_cast<int>(points[2].y), static_cast<int>(points[0].x), static_cast<int>(points[0].y), color);
+	//上面
+	Novice::DrawLine(static_cast<int>(points[4].x), static_cast<int>(points[4].y), static_cast<int>(points[5].x), static_cast<int>(points[5].y), color);
+	Novice::DrawLine(static_cast<int>(points[5].x), static_cast<int>(points[5].y), static_cast<int>(points[7].x), static_cast<int>(points[7].y), color);
+	Novice::DrawLine(static_cast<int>(points[7].x), static_cast<int>(points[7].y), static_cast<int>(points[6].x), static_cast<int>(points[6].y), color);
+	Novice::DrawLine(static_cast<int>(points[6].x), static_cast<int>(points[6].y), static_cast<int>(points[4].x), static_cast<int>(points[4].y), color);
+	//側面
+	Novice::DrawLine(static_cast<int>(points[4].x), static_cast<int>(points[4].y), static_cast<int>(points[0].x), static_cast<int>(points[0].y), color);
+	Novice::DrawLine(static_cast<int>(points[5].x), static_cast<int>(points[5].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
+	Novice::DrawLine(static_cast<int>(points[7].x), static_cast<int>(points[7].y), static_cast<int>(points[3].x), static_cast<int>(points[3].y), color);
+	Novice::DrawLine(static_cast<int>(points[6].x), static_cast<int>(points[6].y), static_cast<int>(points[2].x), static_cast<int>(points[2].y), color);
+
+}
+
+void DrawOBB(const OBB& obb,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();
+
+	AABB aabb{
+		.min = obb.center - obb.size,
+		.max = obb.center + obb.size,
+		.color = obb.color
+	};
+
+	Vector3 kLocalVertices = { 0.0f,0.0f,0.0f };
+	Matrix4x4 worldMatrix = { 0.0f };
+	Matrix4x4 worldViewProjectionMatrix = { 0.0f };
+	Vector3 ndcVertex = { 0.0f };
+	Vector3 screenVertices = { 0.0f };
+	Vector3 points[8]{};
+
+	points[0] = aabb.min;
+	points[1] = { aabb.min.x,aabb.min.y,aabb.max.z };
+	points[2] = { aabb.max.x,aabb.min.y,aabb.min.z };
+	points[3] = { aabb.max.x,aabb.min.y,aabb.max.z };
+	points[4] = { aabb.min.x,aabb.max.y,aabb.min.z };
+	points[5] = { aabb.min.x,aabb.max.y,aabb.max.z };
+	points[6] = { aabb.max.x,aabb.max.y,aabb.min.z };
+	points[7] = aabb.max;
+
+	for (int i = 0; i < 8; i++) {
+		worldMatrix = matrix->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.0f,0.0f,0.0f }, points[i]);
+		worldViewProjectionMatrix = matrix->Multiply(worldMatrix, viewProjectionMatrix);
+		ndcVertex = matrix->Transform(kLocalVertices, worldViewProjectionMatrix);
+		screenVertices = matrix->Transform(ndcVertex, viewportMatrix);
+		points[i] = screenVertices;
 	}
 	//底面
 	Novice::DrawLine(static_cast<int>(points[0].x), static_cast<int>(points[0].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
@@ -439,6 +489,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{-0.7f,0.3f,0.0f},
 		{2.0f,-0.5f,0.0f} };
 
+	Vector3 rotate{ 0.0f,0.0f,0.0f };
+
+	OBB obb{
+		.center{-1.0f,0.0f,0.0f},
+		.orientations = {{1.0f,0.0f,0.0f},
+						 {0.0f,1.0f,0.0f},
+						 {0.0f,0.0f,1.0f}},
+		.size{0.5f,0.5f,0.5f},
+		.color=WHITE
+	};
+
 	Vector2 localCameraPos{ 0.0f,0.0f };
 
 	float cameraLength = -8.0f;
@@ -508,8 +569,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
 		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
-		Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);
+		//Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
+		//Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);
 
 		if (IsCollision(segment_,aabb1)){
 			aabb1.color = RED;
@@ -518,18 +579,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			aabb1.color = WHITE;
 		}
 
-		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
-		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
-		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
-		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
-		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
-		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
-
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("AABB1.min", &aabb1.min.x, 0.01f);
-		ImGui::DragFloat3("AABB1.max", &aabb1.max.x, 0.01f);
-		ImGui::DragFloat3("StartLinePos", &segment_.origin.x, 0.01f);
-		ImGui::DragFloat3("EndLinePos", &segment_.diff.x, 0.01f);
+		ImGui::DragFloat3("OBB.center", &obb.center.x, 0.01f);
+		ImGui::DragFloat3("OBB.size", &obb.size.x, 0.01f);
+		ImGui::DragFloat3("OBBRotate", &rotate.x, 0.01f);
 		ImGui::End();
 
 		///
@@ -542,11 +595,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
+		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
+
+		DrawOBB(obb, viewProjectionMatrix, viewportMatrix, obb.color);
 
 		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
