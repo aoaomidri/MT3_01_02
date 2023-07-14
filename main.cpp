@@ -162,37 +162,55 @@ void DrawAABB(const AABB& aabb,const Matrix4x4& viewProjectionMatrix, const Matr
 }
 
 void DrawOBB(const OBB& obb,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();
+	std::unique_ptr<Matrix> matrix_ = std::make_unique<Matrix>();
+	std::unique_ptr<Vector> vector_ = std::make_unique<Vector>();	
+	
+	Vector3 orientNum = (obb.orientations[0] + obb.orientations[1] + obb.orientations[2]) * obb.size;
 
-	AABB aabb{
-		.min = obb.center - obb.size,
-		.max = obb.center + obb.size,
-		.color = obb.color
-	};
+	Vector3 pointMax = orientNum;
+
+	Vector3 pointMin = { -orientNum.x,-orientNum.y,-orientNum.z };
+
+	Vector3 points[8]{};
+
+	points[0] = pointMin;
+	points[1] = { pointMin.x,pointMin.y,pointMax.z };
+	points[2] = { pointMax.x,pointMin.y,pointMin.z };
+	points[3] = { pointMax.x,pointMin.y,pointMax.z };
+	points[4] = { pointMin.x,pointMax.y,pointMin.z };
+	points[5] = { pointMin.x,pointMax.y,pointMax.z };
+	points[6] = { pointMax.x,pointMax.y,pointMin.z };
+	points[7] = pointMax;
 
 	Vector3 kLocalVertices = { 0.0f,0.0f,0.0f };
-	Matrix4x4 worldMatrix = { 0.0f };
+	Matrix4x4 worldMatrix = {
+		obb.orientations[0].x,obb.orientations[0].y, obb.orientations[0].z, 0,
+		obb.orientations[1].x,obb.orientations[1].y, obb.orientations[1].z, 0,
+		obb.orientations[2].x,obb.orientations[2].y, obb.orientations[2].z, 0,
+		obb.center.x,obb.center.y,obb.center.z,1
+	};
 	Matrix4x4 worldViewProjectionMatrix = { 0.0f };
 	Vector3 ndcVertex = { 0.0f };
 	Vector3 screenVertices = { 0.0f };
-	Vector3 points[8]{};
-
-	points[0] = aabb.min;
-	points[1] = { aabb.min.x,aabb.min.y,aabb.max.z };
-	points[2] = { aabb.max.x,aabb.min.y,aabb.min.z };
-	points[3] = { aabb.max.x,aabb.min.y,aabb.max.z };
-	points[4] = { aabb.min.x,aabb.max.y,aabb.min.z };
-	points[5] = { aabb.min.x,aabb.max.y,aabb.max.z };
-	points[6] = { aabb.max.x,aabb.max.y,aabb.min.z };
-	points[7] = aabb.max;
+	
+	
 
 	for (int i = 0; i < 8; i++) {
-		worldMatrix = matrix->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.0f,0.0f,0.0f }, points[i]);
-		worldViewProjectionMatrix = matrix->Multiply(worldMatrix, viewProjectionMatrix);
-		ndcVertex = matrix->Transform(kLocalVertices, worldViewProjectionMatrix);
-		screenVertices = matrix->Transform(ndcVertex, viewportMatrix);
+		worldMatrix.m[3][0] = points[i].x;
+		worldMatrix.m[3][1] = points[i].y;
+		worldMatrix.m[3][2] = points[i].z;
+		worldViewProjectionMatrix = matrix_->Multiply(worldMatrix, viewProjectionMatrix);
+		ndcVertex = matrix_->Transform(kLocalVertices, worldViewProjectionMatrix);
+		screenVertices = matrix_->Transform(ndcVertex, viewportMatrix);
 		points[i] = screenVertices;
 	}
+
+	ImGui::Begin("WorldMatrix");
+	ImGui::DragFloat4("WorldMatrix[0]", &worldMatrix.m[0][0], 0.01f);
+	ImGui::DragFloat4("WorldMatrix[1]", &worldMatrix.m[1][0], 0.01f);
+	ImGui::DragFloat4("WorldMatrix[2]", &worldMatrix.m[2][0], 0.01f);
+	ImGui::DragFloat3("WorldMatrix[3]", &points[0].x, 0.01f);
+	ImGui::End();
 	//底面
 	Novice::DrawLine(static_cast<int>(points[0].x), static_cast<int>(points[0].y), static_cast<int>(points[1].x), static_cast<int>(points[1].y), color);
 	Novice::DrawLine(static_cast<int>(points[1].x), static_cast<int>(points[1].y), static_cast<int>(points[3].x), static_cast<int>(points[3].y), color);
@@ -420,7 +438,6 @@ bool IsCollision(const Segment& segment, const AABB& aabb) {
 	Novice::ScreenPrintf(0, 20, "tmin = %.2f", tmin );
 	Novice::ScreenPrintf(0, 40, "tmax = %.2f", tmax);
 
-	float t = tmin / tmax;
 	if (tmax == 0.0f) {
 		return false;
 	}
@@ -444,9 +461,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = {0};
 	char preKeys[256] = {0};
 
-	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();	
+	std::unique_ptr<Matrix> matrix_ = std::make_unique<Matrix>();	
 
-	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
+	std::unique_ptr<Vector> vec_ = std::make_unique<Vector>();
 
 
 	Vector3 cameraTransform = { 0.0f,0.0f,0.0f };
@@ -558,32 +575,55 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			cameraRotate = { 0.26f,0.0f,0.0f };
 		}
 
+		
+		//中央からのカメラの距離
 		Vector3 offset = { localCameraPos.x,localCameraPos.y,cameraLength };
-		Matrix4x4 newRotateMatrix = matrix->MakeRotateMatrix(cameraRotate);
-		offset = matrix->TransformNormal(offset, newRotateMatrix);
+		Matrix4x4 newRotateMatrix = matrix_->MakeRotateMatrix(cameraRotate);
+		offset = matrix_->TransformNormal(offset, newRotateMatrix);
 		cameraTransform =/*中心とするオブジェクトのTransformを足す*/ offset;
 
-		Matrix4x4 cameraMatrix = matrix->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTransform);
-		Matrix4x4 viewMatrix = matrix->Inverce(cameraMatrix);
-		Matrix4x4 projectionMatrix = matrix->MakePerspectiveFovMatrix(0.45f, (1280.0f / 720.0f), 0.1f, 100.0f);
-		Matrix4x4 viewProjectionMatrix = matrix->Multiply(viewMatrix, projectionMatrix);
-		Matrix4x4 viewportMatrix = matrix->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
+		//カメラの座標変換
+		Matrix4x4 cameraMatrix = matrix_->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTransform);
+		Matrix4x4 viewMatrix = matrix_->Inverce(cameraMatrix);
+		Matrix4x4 projectionMatrix = matrix_->MakePerspectiveFovMatrix(0.45f, (1280.0f / 720.0f), 0.1f, 100.0f);
+		Matrix4x4 viewProjectionMatrix = matrix_->Multiply(viewMatrix, projectionMatrix);
+		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
-		//Vector3 start = TransScreen(segment_.origin, viewProjectionMatrix, viewportMatrix);
-		//Vector3 end = TransScreen(segment_.origin + segment_.diff, viewProjectionMatrix, viewportMatrix);
+		//メインの処理を書きこむ
+		
 
-		if (IsCollision(segment_,aabb1)){
-			aabb1.color = RED;
+
+		Matrix4x4 OBBrotateMatrix = matrix_->MakeRotateMatrix(rotate);
+		for (uint32_t i = 0; i < 3; i++){
+			obb.orientations[i].x = OBBrotateMatrix.m[i][0];
+			obb.orientations[i].y = OBBrotateMatrix.m[i][1];
+			obb.orientations[i].z = OBBrotateMatrix.m[i][2];
+		}
+
+		Vector3 base = TransScreen({ 0,0,0 }, viewProjectionMatrix, viewportMatrix);
+		Vector3 xAxis = TransScreen(obb.orientations[0], viewProjectionMatrix, viewportMatrix);
+		Vector3 yAxis = TransScreen(obb.orientations[1], viewProjectionMatrix, viewportMatrix);
+		Vector3 zAxis = TransScreen(obb.orientations[2], viewProjectionMatrix, viewportMatrix);
+
+		
+		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
+			triangle.color = RED;
 		}
 		else {
-			aabb1.color = WHITE;
-		}
-
-		ImGui::Begin("Window");
-		ImGui::DragFloat3("OBB.center", &obb.center.x, 0.01f);
-		ImGui::DragFloat3("OBB.size", &obb.size.x, 0.01f);
-		ImGui::DragFloat3("OBBRotate", &rotate.x, 0.01f);
+			triangle.color = WHITE;
+		}*/
+		ImGui::Begin("OBBParameter");
+		ImGui::DragFloat3("obbSize", &obb.size.x, 0.01f);
+		ImGui::DragFloat3("Rotate", &rotate.x, 0.01f);
+		ImGui::DragFloat3("Center", &obb.center.x, 0.01f);
 		ImGui::End();
+
+
+		/*ImGui::Begin("Window");
+		ImGui::DragFloat3("Triangle.v2", &triangle.vertices->x, 0.01f);
+		ImGui::DragFloat3("Segment.origin", &segment_.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment.diff", &segment_.diff.x, 0.01f);
+		ImGui::End();*/
 
 		///
 		/// ↑更新処理ここまで
@@ -602,10 +642,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+		Novice::DrawLine(int(base.x), int(base.y), int(xAxis.x), int(xAxis.y), color);
+		Novice::DrawLine(int(base.x), int(base.y), int(yAxis.x), int(yAxis.y), color);
+		Novice::DrawLine(int(base.x), int(base.y), int(zAxis.x), int(zAxis.y), color);
+
 
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
-		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangleColor);
+		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangle.color);
 		
 		/// ↑描画処理ここまで
 		///
