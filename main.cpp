@@ -229,6 +229,38 @@ void DrawOBB(const OBB& obb,const Matrix4x4& viewProjectionMatrix, const Matrix4
 
 }
 
+void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2,
+	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	std::unique_ptr<Vector> vector_ = std::make_unique<Vector>();
+	//分割数
+	const uint32_t divisionNumber = 32;
+	//曲線の変数
+	Vector3 bezier0[divisionNumber + 1] = {};
+	float t = 0.0f;
+
+	
+
+	for (uint32_t i = 0; i < divisionNumber+1; i++){
+		t = i / static_cast<float>(divisionNumber);
+
+		Vector3 p0p1 = vector_->Lerp(controlPoint0, controlPoint1, t);
+
+		Vector3 p1p2 = vector_->Lerp(controlPoint1, controlPoint2, t);
+
+		Vector3 p = vector_->Lerp(p0p1, p1p2, t);
+
+		bezier0[i] = p;
+
+		bezier0[i] = TransScreen(bezier0[i], viewProjectionMatrix, viewportMatrix);
+
+	}
+
+	for (uint32_t i = 0; i < divisionNumber; i++) {
+		Novice::DrawLine(static_cast<int>(bezier0[i].x), static_cast<int>(bezier0[i].y),
+			static_cast<int>(bezier0[i + 1].x), static_cast<int>(bezier0[i + 1].y), color);
+	}
+}
+
 Vector3 Add(const Vector3& Vec1, const Vector3& Vec2) {
 	Vector3 result;
 	result.x = Vec1.x + Vec2.x;
@@ -473,6 +505,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	triangle.vertices[1] = { 0.0f,1.0f,0.0f };
 	triangle.vertices[2] = { 1.0f,0.0f,0.0f };
 		
+	Vector3 controlPoints[3] = {
+		{-0.8f,0.58f,1.0f},
+		{1.76f,1.0f,-0.3f},
+		{0.94f,-0.7f,2.3f}
+	};
+	uint32_t lineColor = BLUE;
 
 	uint32_t color = WHITE;
 
@@ -484,10 +522,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		WHITE
 	};
 
-	Sphere sphere{
-		.center{1.0f,1.0f,1.0f},
-		.radius = 1.0f,
-		.color = WHITE
+	Sphere sphere0{
+		.center=controlPoints[0],
+		.radius = 0.01f,
+		.color = BLACK
+	};
+	Sphere sphere1{
+		.center = controlPoints[1],
+		.radius = 0.01f,
+		.color = BLACK
+	};
+	Sphere sphere2{
+		.center = controlPoints[2],
+		.radius = 0.01f,
+		.color = BLACK
 	};
 
 	AABB aabb1{
@@ -591,20 +639,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//メインの処理を書きこむ
 		
-
-
-		Matrix4x4 OBBrotateMatrix = matrix_->MakeRotateMatrix(rotate);
-		for (uint32_t i = 0; i < 3; i++){
-			obb.orientations[i].x = OBBrotateMatrix.m[i][0];
-			obb.orientations[i].y = OBBrotateMatrix.m[i][1];
-			obb.orientations[i].z = OBBrotateMatrix.m[i][2];
-		}
-
-		Vector3 base = TransScreen({ 0,0,0 }, viewProjectionMatrix, viewportMatrix);
-		Vector3 xAxis = TransScreen(obb.orientations[0], viewProjectionMatrix, viewportMatrix);
-		Vector3 yAxis = TransScreen(obb.orientations[1], viewProjectionMatrix, viewportMatrix);
-		Vector3 zAxis = TransScreen(obb.orientations[2], viewProjectionMatrix, viewportMatrix);
-
+		sphere0.center = controlPoints[0];
+		sphere1.center = controlPoints[1];
+		sphere2.center = controlPoints[2];
 		
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
@@ -612,10 +649,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			triangle.color = WHITE;
 		}*/
-		ImGui::Begin("OBBParameter");
-		ImGui::DragFloat3("obbSize", &obb.size.x, 0.01f);
-		ImGui::DragFloat3("Rotate", &rotate.x, 0.01f);
-		ImGui::DragFloat3("Center", &obb.center.x, 0.01f);
+		ImGui::Begin("Bezier");
+		ImGui::DragFloat3("controlPoint0", &controlPoints[0].x, 0.01f);
+		ImGui::DragFloat3("controlPoint1", &controlPoints[1].x, 0.01f);
+		ImGui::DragFloat3("controlPoint2", &controlPoints[2].x, 0.01f);
 		ImGui::End();
 
 
@@ -637,15 +674,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
-		DrawOBB(obb, viewProjectionMatrix, viewportMatrix, obb.color);
-
 		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
-		Novice::DrawLine(int(base.x), int(base.y), int(xAxis.x), int(xAxis.y), color);
-		Novice::DrawLine(int(base.x), int(base.y), int(yAxis.x), int(yAxis.y), color);
-		Novice::DrawLine(int(base.x), int(base.y), int(zAxis.x), int(zAxis.y), color);
+		
+		DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
+			viewProjectionMatrix, viewportMatrix, lineColor);
 
+		DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
 
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 

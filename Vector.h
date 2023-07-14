@@ -19,7 +19,9 @@ public:
 	Vector3 Cross(const Vector3& vA, const Vector3& vB);
 
 	Vector3 Perpendicular(const Vector3& vector);
-
+	//ラープ
+	Vector3 Lerp(const Vector3& v1, const Vector3 v2, float t);
+	
 	// スカラー倍
 	Vector3 Multiply(float scalar, const Vector3& Vec);
 

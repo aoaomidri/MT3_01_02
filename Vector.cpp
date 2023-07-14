@@ -37,6 +37,7 @@ Vector3 Vector::Perpendicular(const Vector3& vector) {
 
 }
 
+
 Vector3 Vector::Multiply(float scalar, const Vector3& Vec) {
 	Vector3 result{};
 	result.x = Vec.x * scalar;
@@ -44,6 +45,12 @@ Vector3 Vector::Multiply(float scalar, const Vector3& Vec) {
 	result.z = Vec.z * scalar;
 	return result;
 }
+
+Vector3 Vector::Lerp(const Vector3& v1, const Vector3 v2, float t) {
+
+	return Multiply(t, v1) + Multiply((1 - t), v2);
+}
+
 
 float Vector::Length(const Vector3& v) {
 	float result{ 0.0f };
