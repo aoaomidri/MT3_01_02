@@ -51,6 +51,20 @@ Vector3 Vector::Lerp(const Vector3& v1, const Vector3 v2, float t) {
 	return Multiply(t, v1) + Multiply((1 - t), v2);
 }
 
+Vector3 Vector::makeCatmullRom(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2, const Vector3& controlPoint3, float t) {
+	Vector3 result{};
+	result= Multiply(0.5f,
+		Multiply(powf(t, 3.0f), (Multiply(-1.0f, controlPoint0) + Multiply(3.0f, controlPoint1)
+			+ Multiply(-3.0f, controlPoint2) + controlPoint3)) +
+		Multiply(powf(t, 2.0f), (Multiply(2.0f, controlPoint0) + Multiply(-5.0f, controlPoint1)
+			+ Multiply(4.0f, controlPoint2) - controlPoint3)) +
+		Multiply(t, (controlPoint2 - controlPoint0)) +
+		Multiply(2.0f, controlPoint1));
+
+	return result;
+
+}
+
 
 float Vector::Length(const Vector3& v) {
 	float result{ 0.0f };

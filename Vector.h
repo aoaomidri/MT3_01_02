@@ -21,6 +21,8 @@ public:
 	Vector3 Perpendicular(const Vector3& vector);
 	//ラープ
 	Vector3 Lerp(const Vector3& v1, const Vector3 v2, float t);
+
+	Vector3 makeCatmullRom(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2, const Vector3& controlPoint3, float t);
 	
 	// スカラー倍
 	Vector3 Multiply(float scalar, const Vector3& Vec);

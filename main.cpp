@@ -233,7 +233,7 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	std::unique_ptr<Vector> vector_ = std::make_unique<Vector>();
 	//分割数
-	const uint32_t divisionNumber = 32;
+	const uint32_t divisionNumber = 16;
 	//曲線の変数
 	Vector3 bezier0[divisionNumber + 1] = {};
 	float t = 0.0f;
@@ -260,6 +260,35 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 			static_cast<int>(bezier0[i + 1].x), static_cast<int>(bezier0[i + 1].y), color);
 	}
 }
+
+void DrawCatmullRom(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2, const Vector3& controlPoint3,
+	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	std::unique_ptr<Vector> vector_ = std::make_unique<Vector>();
+	//分割数
+	const uint32_t divisionNumber = 8;
+	//曲線の変数
+	Vector3 CatmullRom[divisionNumber + 1] = {};
+	float t = 0.0f;
+
+
+
+	for (uint32_t i = 0; i < divisionNumber + 1; i++) {
+		t = i / static_cast<float>(divisionNumber);
+
+		Vector3 p = vector_->makeCatmullRom(controlPoint0, controlPoint1, controlPoint2, controlPoint3, t);
+
+		CatmullRom[i] = p;
+
+		CatmullRom[i] = TransScreen(CatmullRom[i], viewProjectionMatrix, viewportMatrix);
+
+	}
+
+	for (uint32_t i = 0; i < divisionNumber; i++) {
+		Novice::DrawLine(static_cast<int>(CatmullRom[i].x), static_cast<int>(CatmullRom[i].y),
+			static_cast<int>(CatmullRom[i + 1].x), static_cast<int>(CatmullRom[i + 1].y), color);
+	}
+}
+
 
 Vector3 Add(const Vector3& Vec1, const Vector3& Vec2) {
 	Vector3 result;
@@ -505,10 +534,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	triangle.vertices[1] = { 0.0f,1.0f,0.0f };
 	triangle.vertices[2] = { 1.0f,0.0f,0.0f };
 		
-	Vector3 controlPoints[3] = {
+	Vector3 controlPoints[4] = {
 		{-0.8f,0.58f,1.0f},
 		{1.76f,1.0f,-0.3f},
-		{0.94f,-0.7f,2.3f}
+		{0.94f,-0.7f,2.3f},
+		{-0.53f,-0.26f,-0.15f}
 	};
 	uint32_t lineColor = BLUE;
 
@@ -534,6 +564,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 	Sphere sphere2{
 		.center = controlPoints[2],
+		.radius = 0.01f,
+		.color = BLACK
+	};
+	Sphere sphere3{
+		.center = controlPoints[3],
 		.radius = 0.01f,
 		.color = BLACK
 	};
@@ -642,6 +677,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		sphere0.center = controlPoints[0];
 		sphere1.center = controlPoints[1];
 		sphere2.center = controlPoints[2];
+		sphere3.center = controlPoints[3];
 		
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
@@ -653,6 +689,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("controlPoint0", &controlPoints[0].x, 0.01f);
 		ImGui::DragFloat3("controlPoint1", &controlPoints[1].x, 0.01f);
 		ImGui::DragFloat3("controlPoint2", &controlPoints[2].x, 0.01f);
+		ImGui::DragFloat3("controlPoint3", &controlPoints[3].x, 0.01f);
 		ImGui::End();
 
 
@@ -678,13 +715,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
 		
-		DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
+		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
+			viewProjectionMatrix, viewportMatrix, lineColor);*/
+		DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);
+		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
+			viewProjectionMatrix, viewportMatrix, lineColor);
+		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[3],
+			viewProjectionMatrix, viewportMatrix, lineColor);
+
 
 		DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
-
+		DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
 		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangle.color);
