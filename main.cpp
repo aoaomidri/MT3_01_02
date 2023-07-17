@@ -62,6 +62,16 @@ void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMa
 	}
 }
 
+void DrawLine(const Vector3& start, const Vector3& end, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix,uint32_t color) {
+	Vector3 startPos = start;
+	Vector3 endPos = end;
+
+	startPos = TransScreen(startPos, viewProjectionMatrix, viewportMatrix);
+	endPos = TransScreen(endPos, viewProjectionMatrix, viewportMatrix);
+
+	Novice::DrawLine(static_cast<int>(startPos.x), static_cast<int>(startPos.y), static_cast<int>(endPos.x), static_cast<int>(endPos.y), color);
+}
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 	const uint32_t kSubdivision = 16;
 	const float kLatEvery = float(M_PI / kSubdivision);//緯度一つ分の角度
@@ -529,48 +539,62 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 cameraTransform = { 0.0f,0.0f,0.0f };
 	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
-	Triangle triangle = {};
+	/*Triangle triangle = {};
 	triangle.vertices[0] = { -1.0f,0.0f,0.0f };
 	triangle.vertices[1] = { 0.0f,1.0f,0.0f };
-	triangle.vertices[2] = { 1.0f,0.0f,0.0f };
+	triangle.vertices[2] = { 1.0f,0.0f,0.0f };*/
 		
-	Vector3 controlPoints[4] = {
+	/*Vector3 controlPoints[4] = {
 		{-0.8f,0.58f,1.0f},
 		{1.76f,1.0f,-0.3f},
 		{0.94f,-0.7f,2.3f},
 		{-0.53f,-0.26f,-0.15f}
-	};
-	uint32_t lineColor = BLUE;
+	};*/
+	//uint32_t lineColor = BLUE;
 
-	uint32_t color = WHITE;
+	uint32_t Linecolor = WHITE;
 
-	uint32_t triangleColor = WHITE;
+	//uint32_t triangleColor = WHITE;
 		
-	Plane plane{
+	/*Plane plane{
 		{0.0f,1.0f,0.0f},
 		1.0f,
 		WHITE
+	};*/
+
+	Vector3 translates[3] = {
+		{0.2f,1.0f,0.0f},
+		{0.4f,0.0f,0.0f},
+		{0.3f,0.0f,0.0f}
 	};
 
+	Vector3 rotates[3] = {
+		{0.0f,0.0f,-6.8f},
+		{0.0f,0.0f,-1.4f},
+		{0.0f,0.0f,0.0f}
+	};
+
+	Vector3 scales[3] = {
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f}
+	};
+
+
 	Sphere sphere0{
-		.center=controlPoints[0],
-		.radius = 0.01f,
-		.color = BLACK
+		.center = translates[0],
+		.radius = 0.1f,
+		.color = RED
 	};
 	Sphere sphere1{
-		.center = controlPoints[1],
-		.radius = 0.01f,
-		.color = BLACK
+		.center = translates[1],
+		.radius = 0.1f,
+		.color = GREEN
 	};
 	Sphere sphere2{
-		.center = controlPoints[2],
-		.radius = 0.01f,
-		.color = BLACK
-	};
-	Sphere sphere3{
-		.center = controlPoints[3],
-		.radius = 0.01f,
-		.color = BLACK
+		.center = translates[2],
+		.radius = 0.1f,
+		.color = BLUE
 	};
 
 	AABB aabb1{
@@ -673,11 +697,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
-		
-		sphere0.center = controlPoints[0];
-		sphere1.center = controlPoints[1];
-		sphere2.center = controlPoints[2];
-		sphere3.center = controlPoints[3];
+		Matrix4x4 shoulderLocalMatrix = matrix_->MakeAffineMatrix(scales[0], rotates[0], translates[0]);
+		Matrix4x4 elbowLocalMatrix = matrix_->MakeAffineMatrix(scales[1], rotates[1], translates[1]);
+		Matrix4x4 handLocalMatrix = matrix_->MakeAffineMatrix(scales[2], rotates[2], translates[2]);
+
+		Matrix4x4 shoulderWorldMatrix = shoulderLocalMatrix;
+		Matrix4x4 elbowWorldMatrix = matrix_->Multiply(elbowLocalMatrix, shoulderWorldMatrix);
+		Matrix4x4 handWorldMatrix = matrix_->Multiply(handLocalMatrix, elbowWorldMatrix);
+		sphere0.center = { shoulderWorldMatrix.m[3][0],shoulderWorldMatrix.m[3][1], shoulderWorldMatrix.m[3][2] };
+		sphere1.center = { elbowWorldMatrix.m[3][0],elbowWorldMatrix.m[3][1], elbowWorldMatrix.m[3][2] };
+		sphere2.center = { handWorldMatrix.m[3][0],handWorldMatrix.m[3][1], handWorldMatrix.m[3][2] };
 		
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
@@ -685,19 +714,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			triangle.color = WHITE;
 		}*/
-		ImGui::Begin("Bezier");
-		ImGui::DragFloat3("controlPoint0", &controlPoints[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1", &controlPoints[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2", &controlPoints[2].x, 0.01f);
-		ImGui::DragFloat3("controlPoint3", &controlPoints[3].x, 0.01f);
+		ImGui::Begin("Translates");
+		ImGui::DragFloat3("controlPoint0.translates", &translates[0].x, 0.01f);
+		ImGui::DragFloat3("controlPoint0.rotate", &rotates[0].x, 0.01f);
+		ImGui::DragFloat3("controlPoint0.scale", &scales[0].x, 0.01f);
+		ImGui::DragFloat3("controlPoint1", &translates[1].x, 0.01f);
+		ImGui::DragFloat3("controlPoint1.rotate", &rotates[1].x, 0.01f);
+		ImGui::DragFloat3("controlPoint1.scale", &scales[1].x, 0.01f);
+		ImGui::DragFloat3("controlPoint2", &translates[2].x, 0.01f);
+		ImGui::DragFloat3("controlPoint2.rotate", &rotates[2].x, 0.01f);
+		ImGui::DragFloat3("controlPoint2.scale", &scales[2].x, 0.01f);
 		ImGui::End();
 
 
-		/*ImGui::Begin("Window");
-		ImGui::DragFloat3("Triangle.v2", &triangle.vertices->x, 0.01f);
-		ImGui::DragFloat3("Segment.origin", &segment_.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment.diff", &segment_.diff.x, 0.01f);
-		ImGui::End();*/
 
 		///
 		/// ↑更新処理ここまで
@@ -717,18 +746,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
-		DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
+		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);
 		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
 			viewProjectionMatrix, viewportMatrix, lineColor);
 		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);
+			viewProjectionMatrix, viewportMatrix, lineColor);*/
 
 
 		DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
+
+		DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
+		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);
+		//DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
 		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangle.color);
