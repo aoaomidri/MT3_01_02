@@ -550,7 +550,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.94f,-0.7f,2.3f},
 		{-0.53f,-0.26f,-0.15f}
 	};*/
-	//uint32_t lineColor = BLUE;
 
 	uint32_t Linecolor = WHITE;
 
