@@ -32,7 +32,19 @@ private:
 	Vector3 v2;
 
 public:
+	Matrix4x4 mat;
+
 	void Update();
+	//加算
+	Matrix4x4 Add(const Matrix4x4& mat1, const Matrix4x4& mat2);
+	////減算
+	Matrix4x4 Subtract(const Matrix4x4& mat1, const Matrix4x4& mat2);
+	////転置行列
+	Matrix4x4 Transpose(const Matrix4x4& mat);
+	////単位行列の作成
+	Matrix4x4 MakeIdentity4x4();
+	////積
+	Matrix4x4 Multiply(const Matrix4x4& mat1, const Matrix4x4& mat2);
 
 
 	Matrix4x4 MakeAffineMatrix(const Vector3& scale_, const Vector3& rot, const Vector3& translate_);
@@ -46,10 +58,6 @@ public:
 
 
 	Matrix4x4 MakeTranslateMatrix(const Vector3& translate_);
-
-	////積
-	Matrix4x4 Multiply(const Matrix4x4& mat1, const Matrix4x4& mat2);
-
 
 	//透視投影行列
 	Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip);
@@ -66,4 +74,6 @@ public:
 	//ベクトル変換
 	Vector3 TransformNormal(const Vector3& v, const Matrix4x4& m);
 
+	
 };
+

@@ -32,6 +32,25 @@ Matrix::Matrix() {
 void Matrix::Update() {
 }
 
+Matrix4x4 Matrix::Add(const Matrix4x4& mat1, const Matrix4x4& mat2) {
+	Matrix4x4 result = { 0.0f };
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			result.m[i][j] = mat1.m[i][j] + mat2.m[i][j];
+		}
+	}
+	return result;
+}
+
+Matrix4x4 Matrix::Subtract(const Matrix4x4& mat1, const Matrix4x4& mat2) {
+	Matrix4x4 result = { 0.0f };
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			result.m[i][j] = mat1.m[i][j] - mat2.m[i][j];
+		}
+	}
+	return result;
+}
 
 
 ////積
@@ -136,6 +155,33 @@ Matrix4x4 Matrix::Inverce(const Matrix4x4& mat) {
 	return result;
 }
 
+Matrix4x4 Matrix::Transpose(const Matrix4x4& mat) {
+	Matrix4x4 result = { 0.0f };
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			result.m[i][j] = mat.m[j][i];
+		}
+	}
+	return result;
+}
+
+Matrix4x4 Matrix::MakeIdentity4x4() {
+	Matrix4x4 result = { 0.0f };
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (i < 1 && j < 1) {
+				result.m[i][j] = 1.0f;
+			}
+			else if (i = j) {
+				result.m[i][j] = 1.0f;
+			}
+			else {
+				result.m[i][j] = 0.0f;
+			}
+		}
+	}
+	return result;
+}
 
 Matrix4x4 Matrix::MakeScaleMatrix(const Vector3& scale_) {
 	Matrix4x4 result{};
@@ -288,3 +334,6 @@ Matrix4x4 Matrix::MakeViewportMatrix(float left, float top, float width, float h
 
 	return result;
 }
+
+
+

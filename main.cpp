@@ -5,6 +5,20 @@
 
 const char kWindowTitle[] = "LE2A_20_ムラカミ_アオイ";
 
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) {
+	std::unique_ptr<Matrix> matrix_ = std::make_unique<Matrix>();
+	return matrix_->Add(m1, m2);
+}
+
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) {
+	std::unique_ptr<Matrix> matrix_ = std::make_unique<Matrix>();
+	return matrix_->Subtract(m1, m2);
+}
+
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) {
+	std::unique_ptr<Matrix> matrix_ = std::make_unique<Matrix>();
+	return matrix_->Multiply(m1, m2);
+}
 
 Vector3 TransScreen(const Vector3& transform,const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
 	std::unique_ptr<Matrix> matrix = std::make_unique<Matrix>();
@@ -626,7 +640,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector2 localCameraPos{ 0.0f,0.0f };
 
 	float cameraLength = -8.0f;
-	
+	//オーバーロード確認用
+	Vector3 a{ 0.2f,1.0f,0.0f };
+	Vector3 b{ 2.4f,3.1f,1.2f };
+	Vector3 c = a + b;
+	Vector3 d = (a - b);
+	Vector3 e = a * 2.4f;
+	Vector3 OBrotate{ 0.4f,1.43f,-0.8f };
+	Matrix4x4 OBrotateXMatrix = matrix_->MakeRotateMatrixX(OBrotate);
+	Matrix4x4 OBrotateYMatrix = matrix_->MakeRotateMatrixY(OBrotate);
+	Matrix4x4 OBrotateZMatrix = matrix_->MakeRotateMatrixZ(OBrotate);
+	Matrix4x4 OBrotateMatrix = OBrotateXMatrix * OBrotateYMatrix * OBrotateZMatrix;
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -714,15 +738,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			triangle.color = WHITE;
 		}*/
 		ImGui::Begin("Translates");
-		ImGui::DragFloat3("controlPoint0.translates", &translates[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint0.rotate", &rotates[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint0.scale", &scales[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1", &translates[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1.rotate", &rotates[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1.scale", &scales[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2", &translates[2].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2.rotate", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2.scale", &scales[2].x, 0.01f);
+		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
+		ImGui::Text("d:%f, %f, %f", d.x, d.y, d.z);
+		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
+		ImGui::Text("matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
+			OBrotateMatrix.m[0][0], OBrotateMatrix.m[0][1], OBrotateMatrix.m[0][2], OBrotateMatrix.m[0][3],
+			OBrotateMatrix.m[1][0], OBrotateMatrix.m[1][1], OBrotateMatrix.m[1][2], OBrotateMatrix.m[1][3],
+			OBrotateMatrix.m[2][0], OBrotateMatrix.m[2][1], OBrotateMatrix.m[2][2], OBrotateMatrix.m[2][3],
+			OBrotateMatrix.m[3][0], OBrotateMatrix.m[3][1], OBrotateMatrix.m[3][2], OBrotateMatrix.m[3][3]
+		);
 		ImGui::End();
 
 
@@ -753,12 +777,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
 
 
-		DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
+		/*DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
 
 		DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
-		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);
+		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);*/
 		//DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 

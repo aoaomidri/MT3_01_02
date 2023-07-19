@@ -15,6 +15,10 @@ private:
 	Vector3 vec;
 
 public:
+	//足し算
+	Vector3 Add(const Vector3& v1, const Vector3 v2);
+	//引き算
+	Vector3 Subtract(const Vector3& v1, const Vector3 v2);
 
 	Vector3 Cross(const Vector3& vA, const Vector3& vB);
 
