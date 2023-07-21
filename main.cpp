@@ -596,18 +596,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Sphere sphere{
 		.center = translates[0],
-		.radius = 0.1f,
+		.radius = 0.05f,
 		.color = RED
-	};
-	Sphere sphere1{
-		.center = translates[1],
-		.radius = 0.1f,
-		.color = GREEN
-	};
-	Sphere sphere2{
-		.center = translates[2],
-		.radius = 0.1f,
-		.color = BLUE
 	};
 
 	AABB aabb1{
@@ -647,6 +637,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.mass = 2.0f,
 		.radius = 0.05f,
 		.color = BLUE
+	};
+
+	Pendulum pendulum = {
+		.anchor = {0.0f,1.0f,0.0f},
+		.length = 0.8f,
+		.angle = 0.7f,
+		.angularVelocity = 0.0f,
+		.angularAcceleration = 0.0f
 	};
 
 	float deltaTime = 1.0f / 60.0f;
@@ -737,12 +735,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			isMoveSpring = true;
 		}
 		if (isMoveSpring){
-			angle += angularVelocity * deltaTime;
-			
+			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sin(pendulum.angle);
+			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+			pendulum.angle += pendulum.angularVelocity * deltaTime;
 		}
-		sphere.center.x = rotateCenter.x + std::cos(angle) * circleRadius;
-		sphere.center.y = rotateCenter.x + std::sin(angle) * circleRadius;
-		sphere.center.z = rotateCenter.z;
+		sphere.center.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
+		sphere.center.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
+		sphere.center.z = pendulum.anchor.z;
 
 
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
@@ -770,7 +769,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
-		//DrawLine(spring.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
+		DrawLine(pendulum.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/

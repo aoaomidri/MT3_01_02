@@ -69,6 +69,14 @@ struct Ball {
 	unsigned int color;//ボールの色
 };
 
+struct Pendulum {
+	Vector3 anchor;//アンカーポイント。固定された端の位置
+	float length;  //紐の長さ
+	float angle;   //現在の角度
+	float angularVelocity;	  //角速度
+	float angularAcceleration;//角加速度
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
