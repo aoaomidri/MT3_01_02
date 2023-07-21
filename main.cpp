@@ -623,7 +623,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 rotate{ 0.0f,0.0f,0.0f };
 
 	OBB obb{
-		.center{-1.0f,0.0f,0.0f},
+		.center{-1.5f,0.0f,0.0f},
 		.orientations = {{1.0f,0.0f,0.0f},
 						 {0.0f,1.0f,0.0f},
 						 {0.0f,0.0f,1.0f}},
