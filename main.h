@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include"Matrix.h"
 #include<memory>
+#include<math.h>
 
 
 struct Sphere{
@@ -49,6 +50,23 @@ struct OBB{
 	Vector3 orientations[3];//座標軸。正規化・直行必須
 	Vector3 size;//座標軸の長さの半分。中心から面までの距離
 	uint32_t color;
+};
+
+struct Spring {
+	//アンカー。固定された端の位置
+	Vector3 anchor;
+	float naturalLength;//自然長
+	float stiffness;//剛性。ばね定数x
+	float dampingCoefficient;//減衰係数
+};
+
+struct Ball {
+	Vector3 position;//ボールの位置
+	Vector3 velocity;//ボールの速度
+	Vector3 acceleration;//ボールの加速度
+	float mass;//ボールの質量
+	float radius;//ボールの半径
+	unsigned int color;//ボールの色
 };
 
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);

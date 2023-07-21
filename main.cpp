@@ -594,7 +594,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 
-	Sphere sphere0{
+	Sphere sphere{
 		.center = translates[0],
 		.radius = 0.1f,
 		.color = RED
@@ -640,17 +640,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector2 localCameraPos{ 0.0f,0.0f };
 
 	float cameraLength = -8.0f;
-	//オーバーロード確認用
-	Vector3 a{ 0.2f,1.0f,0.0f };
-	Vector3 b{ 2.4f,3.1f,1.2f };
-	Vector3 c = a + b;
-	Vector3 d = (a - b);
-	Vector3 e = a * 2.4f;
-	Vector3 OBrotate{ 0.4f,1.43f,-0.8f };
-	Matrix4x4 OBrotateXMatrix = matrix_->MakeRotateMatrixX(OBrotate);
-	Matrix4x4 OBrotateYMatrix = matrix_->MakeRotateMatrixY(OBrotate);
-	Matrix4x4 OBrotateZMatrix = matrix_->MakeRotateMatrixZ(OBrotate);
-	Matrix4x4 OBrotateMatrix = OBrotateXMatrix * OBrotateYMatrix * OBrotateZMatrix;
+
+	Spring spring{
+		.anchor = {0.0f,0.0f,0.0f},
+		.naturalLength = 1.0f,
+		.stiffness = 100.0f,
+		.dampingCoefficient=2.0f
+	};
+
+	Ball ball = {
+		.position = {1.5f,0.0f,0.0f},
+		.mass = 2.0f,
+		.radius = 0.05f,
+		.color = BLUE
+	};
+
+	float deltaTime = 1.0f / 60.0f;
+	
+	bool isMoveSpring = false;
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -720,33 +727,40 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
-		Matrix4x4 shoulderLocalMatrix = matrix_->MakeAffineMatrix(scales[0], rotates[0], translates[0]);
-		Matrix4x4 elbowLocalMatrix = matrix_->MakeAffineMatrix(scales[1], rotates[1], translates[1]);
-		Matrix4x4 handLocalMatrix = matrix_->MakeAffineMatrix(scales[2], rotates[2], translates[2]);
+		ImGui::Begin("Spring");
+		if (ImGui::Button("Start")){
+			isMoveSpring = true;
+		}
+		if (isMoveSpring){
+			Vector3 diff = ball.position - spring.anchor;
+			float length = vec_->Length(diff);
+			if (length != 0.0f) {
+				Vector3 direction = vec_->Normalize(diff);
+				Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
+				Vector3 displacement = (ball.position - restPosition) * length;
+				Vector3 restoringForce = displacement * -spring.stiffness;
+				Vector3 dampingForce = ball.velocity * -spring.dampingCoefficient;
+				Vector3 force = restoringForce + dampingForce;
+				ball.acceleration = force / ball.mass;
+			}
 
-		Matrix4x4 shoulderWorldMatrix = shoulderLocalMatrix;
-		Matrix4x4 elbowWorldMatrix = matrix_->Multiply(elbowLocalMatrix, shoulderWorldMatrix);
-		Matrix4x4 handWorldMatrix = matrix_->Multiply(handLocalMatrix, elbowWorldMatrix);
-		sphere0.center = { shoulderWorldMatrix.m[3][0],shoulderWorldMatrix.m[3][1], shoulderWorldMatrix.m[3][2] };
-		sphere1.center = { elbowWorldMatrix.m[3][0],elbowWorldMatrix.m[3][1], elbowWorldMatrix.m[3][2] };
-		sphere2.center = { handWorldMatrix.m[3][0],handWorldMatrix.m[3][1], handWorldMatrix.m[3][2] };
+			//加速度も速度もどちらも秒を基準とした値である
+			//それが、1/60秒間(deltaTime)適用されたと考える
+			ball.velocity += ball.acceleration * deltaTime;
+			ball.position += ball.velocity * deltaTime;
+		}
 		
+
+		sphere.center = ball.position;
+		sphere.color = ball.color;
+
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
 		}
 		else {
 			triangle.color = WHITE;
 		}*/
-		ImGui::Begin("Translates");
-		ImGui::Text("c:%f, %f, %f", c.x, c.y, c.z);
-		ImGui::Text("d:%f, %f, %f", d.x, d.y, d.z);
-		ImGui::Text("e:%f, %f, %f", e.x, e.y, e.z);
-		ImGui::Text("matrix:\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n",
-			OBrotateMatrix.m[0][0], OBrotateMatrix.m[0][1], OBrotateMatrix.m[0][2], OBrotateMatrix.m[0][3],
-			OBrotateMatrix.m[1][0], OBrotateMatrix.m[1][1], OBrotateMatrix.m[1][2], OBrotateMatrix.m[1][3],
-			OBrotateMatrix.m[2][0], OBrotateMatrix.m[2][1], OBrotateMatrix.m[2][2], OBrotateMatrix.m[2][3],
-			OBrotateMatrix.m[3][0], OBrotateMatrix.m[3][1], OBrotateMatrix.m[3][2], OBrotateMatrix.m[3][3]
-		);
+		
 		ImGui::End();
 
 
@@ -763,9 +777,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
-		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
-		//Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y), color);
+		DrawLine({ 0.0f,0.0f,0.0f }, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
