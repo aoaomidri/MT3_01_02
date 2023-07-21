@@ -615,12 +615,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.max{0.5f,0.5f,0.5f},
 		.color = WHITE
 	};
-	
-	/*AABB aabb2{
-		.min{0.2f,0.2f,0.2f},
-		.max{1.0f,1.0f,1.0f},
-		.color = WHITE
-	};*/
 
 	Segment segment_{ 
 		{-0.7f,0.3f,0.0f},
