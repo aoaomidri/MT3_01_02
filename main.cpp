@@ -643,7 +643,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Ball ball = {
-		.position = {0.8f,0.2f,0.0f},
+		.position = {1.0f,0.2f,0.6f},
 		.mass = 2.0f,
 		.radius = 0.05f,
 		.color = BLUE
@@ -654,6 +654,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
 	
 	bool isMoveSpring = false;
+
+	float angularVelocity = 3.14f;
+
+	float angle = 0.0f;
+
+	float circleRadius = 0.8f;
+
+	Vector3 rotateCenter = {};
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -728,27 +737,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			isMoveSpring = true;
 		}
 		if (isMoveSpring){
-			Vector3 diff = ball.position - spring.anchor;
-			float length = vec_->Length(diff);
-			if (length != 0.0f) {
-				Vector3 direction = vec_->Normalize(diff);
-				Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
-				Vector3 displacement = (ball.position - restPosition) * length;
-				Vector3 restoringForce = displacement * -spring.stiffness;
-				Vector3 dampingForce = ball.velocity * -spring.dampingCoefficient;
-				Vector3 force = (restoringForce + dampingForce) + kGravity;
-				ball.acceleration = force / ball.mass;
-			}
-
-			//加速度も速度もどちらも秒を基準とした値である
-			//それが、1/60秒間(deltaTime)適用されたと考える
-			ball.velocity += ball.acceleration * deltaTime;
-			ball.position += ball.velocity * deltaTime;
+			angle += angularVelocity * deltaTime;
+			
 		}
-		
+		sphere.center.x = rotateCenter.x + std::cos(angle) * circleRadius;
+		sphere.center.y = rotateCenter.x + std::sin(angle) * circleRadius;
+		sphere.center.z = rotateCenter.z;
 
-		sphere.center = ball.position;
-		sphere.color = ball.color;
 
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
@@ -775,7 +770,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
-		DrawLine(spring.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
+		//DrawLine(spring.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
