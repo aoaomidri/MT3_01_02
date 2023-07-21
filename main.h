@@ -77,6 +77,14 @@ struct Pendulum {
 	float angularAcceleration;//角加速度
 };
 
+struct ConicalPendulum {
+	Vector3 anchor;		  //アンカーポイント。固定された端の位置
+	float length;		  //紐の長さ
+	float harfApexAngle;  //円錐の頂点の半分
+	float angle;		  //現在の角度
+	float angularVelocity;//角速度ω
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);

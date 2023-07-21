@@ -647,6 +647,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.angularAcceleration = 0.0f
 	};
 
+	ConicalPendulum conicalPendulum = {
+		.anchor = {0.0f,1.0f,0.0f},
+		.length = 0.8f,
+		.harfApexAngle = 0.7f,
+		.angle = 0.0f,
+		.angularVelocity = 0.0f
+	};
+
 	float deltaTime = 1.0f / 60.0f;
 
 	const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
@@ -735,13 +743,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			isMoveSpring = true;
 		}
 		if (isMoveSpring){
-			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sin(pendulum.angle);
-			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
-			pendulum.angle += pendulum.angularVelocity * deltaTime;
+			conicalPendulum.angularVelocity = std::sqrt(9.8f / conicalPendulum.length * std::cos(conicalPendulum.harfApexAngle));
+			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
 		}
-		sphere.center.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
-		sphere.center.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
-		sphere.center.z = pendulum.anchor.z;
+		float radius = std::sin(conicalPendulum.harfApexAngle) * conicalPendulum.length;
+		float height = std::cos(conicalPendulum.harfApexAngle) * conicalPendulum.length;
+
+		sphere.center.x = conicalPendulum.anchor.x + std::cos(conicalPendulum.angle) * radius;
+		sphere.center.y = conicalPendulum.anchor.y - height;
+		sphere.center.z = conicalPendulum.anchor.z - std::sin(conicalPendulum.angle) * radius;
 
 
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
