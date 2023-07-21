@@ -636,20 +636,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float cameraLength = -8.0f;
 
 	Spring spring{
-		.anchor = {0.0f,0.0f,0.0f},
-		.naturalLength = 1.0f,
+		.anchor = {0.0f,1.0f,0.0f},
+		.naturalLength = 0.7f,
 		.stiffness = 100.0f,
 		.dampingCoefficient=2.0f
 	};
 
 	Ball ball = {
-		.position = {1.5f,0.0f,0.0f},
+		.position = {0.8f,0.2f,0.0f},
 		.mass = 2.0f,
 		.radius = 0.05f,
 		.color = BLUE
 	};
 
 	float deltaTime = 1.0f / 60.0f;
+
+	const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
 	
 	bool isMoveSpring = false;
 	// ウィンドウの×ボタンが押されるまでループ
@@ -734,7 +736,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				Vector3 displacement = (ball.position - restPosition) * length;
 				Vector3 restoringForce = displacement * -spring.stiffness;
 				Vector3 dampingForce = ball.velocity * -spring.dampingCoefficient;
-				Vector3 force = restoringForce + dampingForce;
+				Vector3 force = (restoringForce + dampingForce) + kGravity;
 				ball.acceleration = force / ball.mass;
 			}
 
@@ -773,7 +775,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 
-		DrawLine({ 0.0f,0.0f,0.0f }, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
+		DrawLine(spring.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
