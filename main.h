@@ -85,6 +85,17 @@ struct ConicalPendulum {
 	float angularVelocity;//角速度ω
 };
 
+//視錐台
+struct viewingFrustum {
+	Vector3 translation_;// カメラの座標
+	Vector3 rotate_;	 // カメラの回転
+	Vector3 direction;	 // カメラの向き
+	float verticalFOV;	 // 縦画角
+	float aspectRatio;	 // アスペクト比
+	float nearZ;		 // 深度限界（手前側）
+	float farZ;			 // 深度限界（奥側）
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
@@ -103,6 +114,8 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 void DrawCatmullRom(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2, const Vector3& controlPoint3,
 	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 
+void DrawViewingFrustum(const viewingFrustum& viewingFrustum, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+
 //球と球の当たり判定
 bool IsCollision(const Sphere& s1, const Sphere& s2);
 //弾と平面の当たり判定
@@ -117,6 +130,8 @@ bool IsCollision(const AABB& aabb1, const AABB& aabb2);
 bool IsCollision(const Sphere& sphere, const AABB& aabb);
 //AABBと線分の当たり判定
 bool IsCollision(const Segment& segment, const AABB& aabb);
+//OBBと視錐台の当たり判定
+bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum);
 
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
