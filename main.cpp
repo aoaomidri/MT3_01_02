@@ -243,13 +243,13 @@ void DrawViewingFrustum(const viewingFrustum& viewingFrustum_, const Matrix4x4& 
 
 	Vector3 nearPlanePoints_[4] = { 0 };
 	Vector3 farPlanePoints_[4] = { 0 };
-	//向きベクトル
+	
 	Matrix4x4 CameraMatWorld = mat->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { viewingFrustum_.rotate_ }, { viewingFrustum_.translation_ });
-
+	//向きベクトル
 	Vector3 directionNear = vec->Normalize(viewingFrustum_.direction);
-	directionNear.z = directionNear.z * viewingFrustum_.nearZ;
+	directionNear = directionNear * viewingFrustum_.nearZ;
 	Vector3 directionFar = vec->Normalize(viewingFrustum_.direction);
-	directionFar.z = directionFar.z * viewingFrustum_.farZ;
+	directionFar = directionFar * viewingFrustum_.farZ;
 
 
 	//近平面の縦横
@@ -278,10 +278,6 @@ void DrawViewingFrustum(const viewingFrustum& viewingFrustum_, const Matrix4x4& 
 
 	//頂点
 	Vector3 points[9]{ 0 };
-
-	ImGui::Begin("nearPlane");
-	ImGui::DragFloat2("Size", &nearPlane.x, 0.01f);
-	ImGui::End();
 
 	points[0] = viewingFrustum_.translation_;
 
@@ -450,7 +446,7 @@ bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	//平面と点の距離
 	float k = sqrtf(powf(vec->Dot(plane.normal, sphere.center) - plane.distance, 2.0f));
 
-	Novice::ScreenPrintf(0, 0, "distance = %.1f", k);
+	Novice::ScreenPrintf(0, 0, "distance = %.3f", k);
 	if (k <= sphere.radius) {
 		return true;
 	}
@@ -605,7 +601,7 @@ bool IsCollision(const Segment& segment, const AABB& aabb) {
 
 }
 
-bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum) {
+bool IsCollisionViewFrustum(const OBB& obb, const viewingFrustum& viewingFrustum) {
 	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
 	std::unique_ptr<Matrix> mat = std::make_unique<Matrix>();
 	/*ステップ1視錐台の生成*/
@@ -615,6 +611,9 @@ bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum) {
 
 	//法線の個数
 	const int normalLine = 6;
+
+	//当たる距離
+	const float CollisionDistance = 0.00f;
 
 	//それぞれの幅
 	Vector2 nearPlane{};
@@ -627,10 +626,10 @@ bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum) {
 	
 	//向きベクトルnear
 	Vector3 directionNear = vec->Normalize(viewingFrustum.direction);
-	directionNear.z = directionNear.z * viewingFrustum.nearZ;
+	directionNear = directionNear * viewingFrustum.nearZ;
 	//向きベクトルfar
 	Vector3 directionFar = vec->Normalize(viewingFrustum.direction);
-	directionFar.z = directionFar.z * viewingFrustum.farZ;
+	directionFar = directionFar * viewingFrustum.farZ;
 
 
 	//近平面の縦横
@@ -747,17 +746,334 @@ bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum) {
 	}
 
 		for (int i = 0; i < 8; i++){
-		if (distance[0 + i * normalLine] <= 0.0f &&
-			distance[1 + i * normalLine] <= 0.0f &&
-			distance[2 + i * normalLine] <= 0.0f &&
-			distance[3 + i * normalLine] <= 0.0f &&
-			distance[4 + i * normalLine] <= 0.0f &&
-			distance[5 + i * normalLine] <= 0.0f) {
+		if (distance[0 + i * normalLine] <= CollisionDistance &&
+			distance[1 + i * normalLine] <= CollisionDistance &&
+			distance[2 + i * normalLine] <= CollisionDistance &&
+			distance[3 + i * normalLine] <= CollisionDistance &&
+			distance[4 + i * normalLine] <= CollisionDistance &&
+			distance[5 + i * normalLine] <= CollisionDistance) {
 				return true;
 			}
 		}
 	
 	return false;
+}
+
+bool IsCollisionOBB(const OBB& obb, const viewingFrustum& viewingFrustum) {
+	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
+	std::unique_ptr<Matrix> mat = std::make_unique<Matrix>();
+	/*ステップ1視錐台の生成*/
+	//頂点の個数
+	const int OBBVertex = 8;
+	const int FrustumVertex = 8;
+
+	//法線の個数
+	const int normalLine = 6;
+
+	//当たる距離
+	const float CollisionDistance = 0.00f;
+
+	//それぞれの幅
+	Vector2 nearPlane{};
+	Vector2 farPlane{};
+	//面の頂点
+	Vector3 nearPlanePoints_[4] = { 0 };
+	Vector3 farPlanePoints_[4] = { 0 };
+	//視錐台の行列
+	Matrix4x4 FrustumMatWorld = mat->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { viewingFrustum.rotate_ }, { viewingFrustum.translation_ });
+
+	//向きベクトルnear
+	Vector3 directionNear = vec->Normalize(viewingFrustum.direction);
+	directionNear = directionNear * viewingFrustum.nearZ;
+	//向きベクトルfar
+	Vector3 directionFar = vec->Normalize(viewingFrustum.direction);
+	directionFar = directionFar * viewingFrustum.farZ;
+
+
+	//近平面の縦横
+	nearPlane.y = vec->Length(directionNear) * std::tan(viewingFrustum.verticalFOV / 2);
+	nearPlane.x = nearPlane.y * viewingFrustum.aspectRatio;
+	//遠平面の縦横
+	farPlane.y = vec->Length(directionFar) * std::tan(viewingFrustum.verticalFOV / 2);
+	farPlane.x = farPlane.y * viewingFrustum.aspectRatio;
+
+	nearPlanePoints_[0] = { directionNear.x + -nearPlane.x ,directionNear.y + nearPlane.y ,directionNear.z };//左上
+	nearPlanePoints_[1] = { directionNear.x + nearPlane.x ,directionNear.y + nearPlane.y ,directionNear.z };//右上
+	nearPlanePoints_[2] = { directionNear.x + -nearPlane.x ,directionNear.y + -nearPlane.y ,directionNear.z };//左下
+	nearPlanePoints_[3] = { directionNear.x + nearPlane.x ,directionNear.y + -nearPlane.y ,directionNear.z };//右下
+
+	farPlanePoints_[0] = { directionFar.x + -farPlane.x ,directionFar.y + farPlane.y ,directionFar.z };//左上
+	farPlanePoints_[1] = { directionFar.x + farPlane.x ,directionFar.y + farPlane.y ,directionFar.z };//右上
+	farPlanePoints_[2] = { directionFar.x + -farPlane.x ,directionFar.y + -farPlane.y ,directionFar.z };//左下
+	farPlanePoints_[3] = { directionFar.x + farPlane.x ,directionFar.y + -farPlane.y ,directionFar.z };//右下
+
+	for (int i = 0; i < 4; i++) {
+		nearPlanePoints_[i] = mat->TransformNormal(nearPlanePoints_[i], FrustumMatWorld);
+		farPlanePoints_[i] = mat->TransformNormal(farPlanePoints_[i], FrustumMatWorld);
+	}
+
+	//頂点
+	Vector3 FrustumPoints[FrustumVertex]{ 0 };
+	//near
+	FrustumPoints[0] = viewingFrustum.translation_ + nearPlanePoints_[0];
+	FrustumPoints[1] = viewingFrustum.translation_ + nearPlanePoints_[1];
+	FrustumPoints[2] = viewingFrustum.translation_ + nearPlanePoints_[2];
+	FrustumPoints[3] = viewingFrustum.translation_ + nearPlanePoints_[3];
+	//far
+	FrustumPoints[4] = viewingFrustum.translation_ + farPlanePoints_[0];
+	FrustumPoints[5] = viewingFrustum.translation_ + farPlanePoints_[1];
+	FrustumPoints[6] = viewingFrustum.translation_ + farPlanePoints_[2];
+	FrustumPoints[7] = viewingFrustum.translation_ + farPlanePoints_[3];
+
+	/*ステップ2 OBBの生成*/
+
+	Vector3 obbPoints[OBBVertex]{};
+
+	//obbの行列
+	Matrix4x4 worldMatrix = {
+		obb.orientations[0].x,obb.orientations[0].y, obb.orientations[0].z, 0,
+		obb.orientations[1].x,obb.orientations[1].y, obb.orientations[1].z, 0,
+		obb.orientations[2].x,obb.orientations[2].y, obb.orientations[2].z, 0,
+		obb.center.x,obb.center.y,obb.center.z,1
+	};
+
+	//手前
+	obbPoints[0] = { obb.size.x * -1,obb.size.y,obb.size.z * -1 };//左上
+	obbPoints[1] = { obb.size.x,obb.size.y,obb.size.z * -1 };	  //右上
+	obbPoints[2] = obb.size * -1;								  //左下
+	obbPoints[3] = { obb.size.x,obb.size.y * -1,obb.size.z * -1 };//右下
+	//奥
+	obbPoints[4] = { obb.size.x * -1,obb.size.y,obb.size.z };	  //左上
+	obbPoints[5] = obb.size;									  //右上
+	obbPoints[6] = { obb.size.x * -1,obb.size.y * -1,obb.size.z };//左下
+	obbPoints[7] = { obb.size.x,obb.size.y * -1,obb.size.z };	  //右下
+
+	/*ステップ3 視錐台をOBBのローカル座標に変換*/
+	//OBBの逆行列
+	Matrix4x4 OBBInverceMat = mat->Inverce(worldMatrix);
+	for (int i = 0; i < OBBVertex; i++) {
+		FrustumPoints[i] = mat->Transform(FrustumPoints[i], OBBInverceMat);
+	}
+
+	/*ステップ4 当たり判定*/
+	//near面から
+	Vector3 v01 = obbPoints[1] - obbPoints[0];
+	Vector3 v12 = obbPoints[2] - obbPoints[1];
+
+	//far
+	Vector3 v65 = obbPoints[5] - obbPoints[6];
+	Vector3 v54 = obbPoints[4] - obbPoints[5];
+
+	//left
+	Vector3 v02 = obbPoints[2] - obbPoints[0];
+	Vector3 v26 = obbPoints[6] - obbPoints[2];
+
+	//right
+	Vector3 v53 = obbPoints[3] - obbPoints[5];
+	Vector3 v31 = obbPoints[1] - obbPoints[3];
+
+	//up
+	Vector3 v41 = obbPoints[1] - obbPoints[4];
+	Vector3 v10 = obbPoints[0] - obbPoints[1];
+
+	//down
+	Vector3 v23 = obbPoints[3] - obbPoints[2];
+	Vector3 v36 = obbPoints[6] - obbPoints[3];
+
+
+	Vector3 normal[normalLine] = {};
+
+	float distance[48] = {};
+	//near
+	normal[0] = vec->Normalize(vec->Cross(v01, v12));
+	//far
+	normal[1] = vec->Normalize(vec->Cross(v65, v54));
+	//left
+	normal[2] = vec->Normalize(vec->Cross(v02, v26));
+	//right
+	normal[3] = vec->Normalize(vec->Cross(v53, v31));
+	//up
+	normal[4] = vec->Normalize(vec->Cross(v41, v10));
+	//down
+	normal[5] = vec->Normalize(vec->Cross(v23, v36));
+	for (int i = 0; i < 8; i++) {
+		distance[0 + i * normalLine] = vec->Dot(FrustumPoints[i] - obbPoints[0], normal[0]);
+		distance[1 + i * normalLine] = vec->Dot(FrustumPoints[i] - obbPoints[4], normal[1]);
+		distance[2 + i * normalLine] = vec->Dot(FrustumPoints[i] - obbPoints[0], normal[2]);
+		distance[3 + i * normalLine] = vec->Dot(FrustumPoints[i] - obbPoints[1], normal[3]);
+		distance[4 + i * normalLine] = vec->Dot(FrustumPoints[i] - obbPoints[0], normal[4]);
+		distance[5 + i * normalLine] = vec->Dot(FrustumPoints[i] - obbPoints[2], normal[5]);
+	}
+
+	for (int i = 0; i < 8; i++) {
+		if (distance[0 + i * normalLine] <= CollisionDistance &&
+			distance[1 + i * normalLine] <= CollisionDistance &&
+			distance[2 + i * normalLine] <= CollisionDistance &&
+			distance[3 + i * normalLine] <= CollisionDistance &&
+			distance[4 + i * normalLine] <= CollisionDistance &&
+			distance[5 + i * normalLine] <= CollisionDistance) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool IsCollisionOBBViewFrustum(const OBB& obb, const viewingFrustum& viewingFrustum) {
+	if (IsCollisionOBB(obb, viewingFrustum) || IsCollisionViewFrustum(obb, viewingFrustum)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool IsCollisionSphereViewFrustum(const Sphere& sp, const viewingFrustum& viewingFrustum) {
+	std::unique_ptr<Vector> vec = std::make_unique<Vector>();
+	std::unique_ptr<Matrix> mat = std::make_unique<Matrix>();
+	/*ステップ1視錐台の生成*/
+	//頂点の個数
+	const int FrustumVertex = 8;
+
+	//法線の個数
+	const int normalLine = 6;
+
+	//当たる距離
+	const float CollisionDistance = 0.00f;
+
+	//それぞれの幅
+	Vector2 nearPlane{};
+	Vector2 farPlane{};
+	//面の頂点
+	Vector3 nearPlanePoints_[4] = { 0 };
+	Vector3 farPlanePoints_[4] = { 0 };
+	//視錐台の行列
+	Matrix4x4 FrustumMatWorld = mat->MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { viewingFrustum.rotate_ }, { viewingFrustum.translation_ });
+
+	//向きベクトルnear
+	Vector3 directionNear = vec->Normalize(viewingFrustum.direction);
+	directionNear = directionNear * viewingFrustum.nearZ;
+	//向きベクトルfar
+	Vector3 directionFar = vec->Normalize(viewingFrustum.direction);
+	directionFar = directionFar * viewingFrustum.farZ;
+
+
+	//近平面の縦横
+	nearPlane.y = vec->Length(directionNear) * std::tan(viewingFrustum.verticalFOV / 2);
+	nearPlane.x = nearPlane.y * viewingFrustum.aspectRatio;
+	//遠平面の縦横
+	farPlane.y = vec->Length(directionFar) * std::tan(viewingFrustum.verticalFOV / 2);
+	farPlane.x = farPlane.y * viewingFrustum.aspectRatio;
+
+	nearPlanePoints_[0] = { directionNear.x + -nearPlane.x ,directionNear.y + nearPlane.y ,directionNear.z };//左上
+	nearPlanePoints_[1] = { directionNear.x + nearPlane.x ,directionNear.y + nearPlane.y ,directionNear.z };//右上
+	nearPlanePoints_[2] = { directionNear.x + -nearPlane.x ,directionNear.y + -nearPlane.y ,directionNear.z };//左下
+	nearPlanePoints_[3] = { directionNear.x + nearPlane.x ,directionNear.y + -nearPlane.y ,directionNear.z };//右下
+
+	farPlanePoints_[0] = { directionFar.x + -farPlane.x ,directionFar.y + farPlane.y ,directionFar.z };//左上
+	farPlanePoints_[1] = { directionFar.x + farPlane.x ,directionFar.y + farPlane.y ,directionFar.z };//右上
+	farPlanePoints_[2] = { directionFar.x + -farPlane.x ,directionFar.y + -farPlane.y ,directionFar.z };//左下
+	farPlanePoints_[3] = { directionFar.x + farPlane.x ,directionFar.y + -farPlane.y ,directionFar.z };//右下
+
+	//頂点
+	Vector3 FrustumPoints[FrustumVertex]{ 0 };
+	//near
+	FrustumPoints[0] = viewingFrustum.translation_ + nearPlanePoints_[0];
+	FrustumPoints[1] = viewingFrustum.translation_ + nearPlanePoints_[1];
+	FrustumPoints[2] = viewingFrustum.translation_ + nearPlanePoints_[2];
+	FrustumPoints[3] = viewingFrustum.translation_ + nearPlanePoints_[3];
+	//far
+	FrustumPoints[4] = viewingFrustum.translation_ + farPlanePoints_[0];
+	FrustumPoints[5] = viewingFrustum.translation_ + farPlanePoints_[1];
+	FrustumPoints[6] = viewingFrustum.translation_ + farPlanePoints_[2];
+	FrustumPoints[7] = viewingFrustum.translation_ + farPlanePoints_[3];
+
+	/*ステップ2 球の生成*/
+	Vector3 SpherePoint = sp.center;
+
+	Matrix4x4 FrustumInverceMat = mat->Inverce(FrustumMatWorld);
+
+		SpherePoint = mat->Transform(SpherePoint, FrustumInverceMat);
+
+	/*ステップ4 当たり判定*/
+	//near面から
+	Vector3 v01 = FrustumPoints[1] - FrustumPoints[0];
+	Vector3 v12 = FrustumPoints[2] - FrustumPoints[1];
+
+	//far
+	Vector3 v65 = FrustumPoints[5] - FrustumPoints[6];
+	Vector3 v54 = FrustumPoints[4] - FrustumPoints[5];
+
+	//left
+	Vector3 v02 = FrustumPoints[2] - FrustumPoints[0];
+	Vector3 v26 = FrustumPoints[6] - FrustumPoints[2];
+
+	//right
+	Vector3 v53 = FrustumPoints[3] - FrustumPoints[5];
+	Vector3 v31 = FrustumPoints[1] - FrustumPoints[3];
+
+	//up
+	Vector3 v41 = FrustumPoints[1] - FrustumPoints[4];
+	Vector3 v10 = FrustumPoints[0] - FrustumPoints[1];
+
+	//down
+	Vector3 v23 = FrustumPoints[3] - FrustumPoints[2];
+	Vector3 v36 = FrustumPoints[6] - FrustumPoints[3];
+
+
+	Vector3 normal[normalLine] = {};
+
+	float distance[6] = {};
+	//near
+	normal[0] = vec->Normalize(vec->Cross(v01, v12));
+	//far
+	normal[1] = vec->Normalize(vec->Cross(v65, v54));
+	//left
+	normal[2] = vec->Normalize(vec->Cross(v02, v26));
+	//right
+	normal[3] = vec->Normalize(vec->Cross(v53, v31));
+	//up
+	normal[4] = vec->Normalize(vec->Cross(v41, v10));
+	//down
+	normal[5] = vec->Normalize(vec->Cross(v23, v36));
+
+	distance[0] = vec->Dot(SpherePoint - FrustumPoints[0], normal[0]);
+	distance[1] = vec->Dot(SpherePoint - FrustumPoints[4], normal[1]);
+	distance[2] = vec->Dot(SpherePoint - FrustumPoints[0], normal[2]);
+	distance[3] = vec->Dot(SpherePoint - FrustumPoints[1], normal[3]);
+	distance[4] = vec->Dot(SpherePoint - FrustumPoints[0], normal[4]);
+	distance[5] = vec->Dot(SpherePoint - FrustumPoints[2], normal[5]);
+
+	ImGui::Begin("Distance");
+	ImGui::DragFloat("distance0", &distance[0], 0.01f);
+	ImGui::DragFloat("distance1", &distance[1], 0.01f);
+	ImGui::DragFloat("distance2", &distance[2], 0.01f);
+	ImGui::DragFloat("distance3", &distance[3], 0.01f);
+	ImGui::DragFloat("distance4", &distance[4], 0.01f);
+	ImGui::DragFloat("distance5", &distance[5], 0.01f);
+	ImGui::End();
+
+	if (distance[0] <= sp.radius &&
+		distance[1] <= sp.radius &&
+		distance[2] <= sp.radius &&
+		distance[3] <= sp.radius &&
+		distance[4] <= sp.radius &&
+		distance[5] <= sp.radius) {
+		return true;
+	}
+
+	return false;
+
+}
+
+Vector3 Reflect(const Vector3& input, const Vector3& normal) {
+	Vector3 result{ 0 };
+	std::unique_ptr<Vector> vec_ = std::make_unique<Vector>();
+
+
+	result = input - (normal * 2.0f * vec_->Dot(input, normal));
+
+	return result;
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -793,13 +1109,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//uint32_t triangleColor = WHITE;
 		
 	Plane plane{
-		{0.0f,1.0f,0.0f},
-		1.0f,
+		{-0.2f,0.9f,-0.3f},
+		0.0f,
 		WHITE
 	};
 
 	Vector3 translates[3] = {
-		{0.2f,1.0f,0.0f},
+		{0.2f,0.3f,0.0f},
 		{0.4f,0.0f,0.0f},
 		{0.3f,0.0f,0.0f}
 	};
@@ -818,8 +1134,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 	Sphere sphere{
-		.center = translates[0],
-		.radius = 0.5f,
+		.center = {0.2f,0.3f,0.0f},
+		.radius = 0.3f,
 		.color = WHITE
 	};
 
@@ -856,10 +1172,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	Ball ball = {
-		.position = {1.0f,0.2f,0.6f},
+		.position = {0.8f,1.2f,0.3f},
 		.mass = 2.0f,
 		.radius = 0.05f,
-		.color = BLUE
+		.color = WHITE,
+		
 	};
 
 	Pendulum pendulum = {
@@ -888,7 +1205,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.farZ = 1.5f,
 	};
 
+	const float deltaTime = 1.0f / 60.0f;
 
+	Capsule capsule{
+		.segment = {
+			.origin = {0},
+			.diff = {0},
+		},
+		.radius = ball.radius,
+	};
+
+	bool isDrawOBB = false;
+
+	bool isDrawSphere = false;
+
+	bool isDrawFrustum = false;
+
+	Vector3 beforePosition = {};
+	Vector3 afterPosition = {};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -958,38 +1292,83 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
+		beforePosition = ball.position;
+
 		Matrix4x4 rotateMatrix = matrix_->MakeRotateMatrix(rotate);
 		for (int i = 0; i < 3; i++){
 			obb.orientations[i].x = rotateMatrix.m[i][0];
 			obb.orientations[i].y = rotateMatrix.m[i][1];
 			obb.orientations[i].z = rotateMatrix.m[i][2];
 		}
-
-
-		
-		ImGui::Begin("viewingFrustum");
-		
-		ImGui::DragFloat3("rotate", &viewingFrustum_.rotate_.x, 0.01f);
-		ImGui::DragFloat3("translation", &viewingFrustum_.translation_.x, 0.01f);
-		ImGui::SliderFloat("nearZ", &viewingFrustum_.nearZ, 0.1f, viewingFrustum_.farZ - 0.1f, "%.1f");
-		ImGui::SliderFloat("farZ", &viewingFrustum_.farZ, viewingFrustum_.nearZ + 0.1f, 3.0f, "%.1f");
-		ImGui::DragFloat3("direction", &viewingFrustum_.direction.x, 0.01f);
-		//ImGui::DragFloat3("sphere_translation", &sphere.center.x, 0.01f);
-		
+		ImGui::Begin("Project");
+		ImGui::Checkbox("DrawOBB", &isDrawOBB);
+		ImGui::Checkbox("DrawSphere", &isDrawSphere);
+		ImGui::Checkbox("DrawViewFrustum", & isDrawFrustum);
 		ImGui::End();
+		if (isDrawFrustum){
 
-		ImGui::Begin("OBB");
-		ImGui::DragFloat3("OBBrotate", &rotate.x, 0.01f);
-		ImGui::DragFloat3("OBBCenter", &obb.center.x, 0.01f);
-		ImGui::End();
+			ImGui::Begin("viewingFrustum");
 
-		if (IsCollision(obb,viewingFrustum_)) {
+			ImGui::DragFloat3("rotate", &viewingFrustum_.rotate_.x, 0.01f);
+			ImGui::DragFloat3("translation", &viewingFrustum_.translation_.x, 0.01f);
+			ImGui::SliderFloat("nearZ", &viewingFrustum_.nearZ, 0.1f, viewingFrustum_.farZ - 0.1f, "%.1f");
+			ImGui::SliderFloat("farZ", &viewingFrustum_.farZ, viewingFrustum_.nearZ + 0.1f, 3.0f, "%.1f");
+			ImGui::DragFloat3("direction", &viewingFrustum_.direction.x, 0.01f);
+			//ImGui::DragFloat3("sphere_translation", &sphere.center.x, 0.01f);
+
+			ImGui::End();
+		}
+		if (isDrawOBB){
+			ImGui::Begin("OBB");
+			ImGui::DragFloat3("OBBrotate", &rotate.x, 0.01f);
+			ImGui::DragFloat3("OBBCenter", &obb.center.x, 0.01f);
+			ImGui::End();
+		}
+		if (isDrawSphere) {
+			ImGui::Begin("Sphere");
+			ImGui::DragFloat3("SphereCenter", &sphere.center.x, 0.01f);
+			ImGui::DragFloat("SphereRadius", &sphere.radius, 0.01f);
+			ImGui::End();
+
+		}
+		ImGui::Begin("Button");
+
+		if (ImGui::Button("MoveStart")){
+			ball.acceleration = { 0.0f,-4.9f,0.0f };
+		}
+		ImGui::Text("\n");
+		if (ImGui::Button("PositionSet")){
+			ball.position = { 0.8f,1.2f,0.3f };
+			ball.acceleration = { 0 };
+			ball.velocity = { 0 };
+		}
+		ball.velocity += ball.acceleration * deltaTime;
+		ball.position += ball.velocity * deltaTime;
+		afterPosition = ball.position;
+
+		capsule.segment.origin = beforePosition;
+		capsule.segment.diff = afterPosition - beforePosition;
+		capsule.radius = ball.radius;
+
+
+		if (IsCollision(Sphere{ball.position,ball.radius},plane)){
+			ball.velocity = Reflect(ball.velocity, plane.normal) * 0.8f;
+		}
+		
+		if (IsCollisionOBBViewFrustum(obb,viewingFrustum_)){
 			obb.color = RED;
 		}
 		else {
 			obb.color = WHITE;
 		}
 
+		if (IsCollisionSphereViewFrustum(sphere,viewingFrustum_)){
+			sphere.color = RED;
+		}
+		else {
+			sphere.color = WHITE;
+		}
+		ImGui::End();
 
 		///
 		/// ↑更新処理ここまで
@@ -1002,16 +1381,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
 		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
-
-		DrawOBB(obb, viewProjectionMatrix, viewportMatrix, obb.color);
-
-		//DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
-
+		if (isDrawOBB){
+			DrawOBB(obb, viewProjectionMatrix, viewportMatrix, obb.color);
+		}
+		if (isDrawSphere){
+			DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
+		}
 		//DrawLine(pendulum.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
 		
 		//DrawLine(segment_.origin, segment_.diff, viewProjectionMatrix, viewportMatrix, WHITE);
 
-		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, plane.color);
+		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, plane.color);
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
 		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
@@ -1028,12 +1408,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
 		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);*/
-		//DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(Sphere{ ball.position,ball.radius,ball.color }, viewProjectionMatrix, viewportMatrix);
 
 		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangle.color);
-
-		DrawViewingFrustum(viewingFrustum_, viewProjectionMatrix, viewportMatrix, GREEN);
-		
+		if(isDrawFrustum){
+			DrawViewingFrustum(viewingFrustum_, viewProjectionMatrix, viewportMatrix, BLACK);
+		}
 		/// ↑描画処理ここまで
 		///
 

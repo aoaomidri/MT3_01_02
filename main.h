@@ -96,6 +96,11 @@ struct viewingFrustum {
 	float farZ;			 // 深度限界（奥側）
 };
 
+struct Capsule{
+	Segment segment;
+	float radius;
+};
+
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 void DrawGrid(const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
@@ -133,9 +138,12 @@ bool IsCollision(const Segment& segment, const AABB& aabb);
 //OBBと視錐台の当たり判定
 bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum);
 
+bool IsCollision(const Sphere& sp,const viewingFrustum& viewingFrustum);
+
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 Vector3 Project(const Vector3& v1, const Vector3& v2);
 
 Vector3 ClosestPoint(const Vector3& point, const Segment& segment);
 
+Vector3 Reflect(const Vector3& input, const Vector3& normal);
