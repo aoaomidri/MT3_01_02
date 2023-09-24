@@ -462,6 +462,7 @@ bool IsCollision(const Segment& segment, const Plane& plane) {
 
 	float t = (plane.distance - Dot(segment.origin, plane.normal)) / dot;
 
+
 	if (t >= 0.0f && t <= 1.0f) {
 		return true;
 	}else {
@@ -1066,6 +1067,26 @@ bool IsCollisionSphereViewFrustum(const Sphere& sp, const viewingFrustum& viewin
 
 }
 
+bool IsCollisionCapsulePlane(const Capsule& capsule, const Plane& plane) {
+	float dot = Dot(plane.normal, capsule.segment.diff);
+
+	if (dot == 0.0f) {
+		return false;
+	}
+
+	float t = (plane.distance - Dot(capsule.segment.origin, plane.normal)) / dot;
+
+	Novice::ScreenPrintf(0, 0, "distance = %.2f", t);
+
+
+	if (t >= 0.0f && t <= 1.0f) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 Vector3 Reflect(const Vector3& input, const Vector3& normal) {
 	Vector3 result{ 0 };
 	std::unique_ptr<Vector> vec_ = std::make_unique<Vector>();
@@ -1351,7 +1372,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		capsule.radius = ball.radius;
 
 
-		if (IsCollision(Sphere{ball.position,ball.radius},plane)){
+		if (IsCollisionCapsulePlane(capsule,plane)){
 			ball.velocity = Reflect(ball.velocity, plane.normal) * 0.8f;
 		}
 		

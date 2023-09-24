@@ -140,6 +140,8 @@ bool IsCollision(const OBB& obb, const viewingFrustum& viewingFrustum);
 
 bool IsCollision(const Sphere& sp,const viewingFrustum& viewingFrustum);
 
+bool IsCollisionCapsulePlane(const Capsule& capsule, const Plane& plane);
+
 Vector3 TransScreen(const Vector3& transform, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix);
 
 Vector3 Project(const Vector3& v1, const Vector3& v2);
