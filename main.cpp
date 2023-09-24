@@ -979,17 +979,18 @@ bool IsCollisionSphereViewFrustum(const Sphere& sp, const viewingFrustum& viewin
 	//頂点
 	Vector3 FrustumPoints[FrustumVertex]{ 0 };
 	//near
-	FrustumPoints[0] = viewingFrustum.translation_ + nearPlanePoints_[0];
-	FrustumPoints[1] = viewingFrustum.translation_ + nearPlanePoints_[1];
-	FrustumPoints[2] = viewingFrustum.translation_ + nearPlanePoints_[2];
-	FrustumPoints[3] = viewingFrustum.translation_ + nearPlanePoints_[3];
+	FrustumPoints[0] =  nearPlanePoints_[0];
+	FrustumPoints[1] =  nearPlanePoints_[1];
+	FrustumPoints[2] =  nearPlanePoints_[2];
+	FrustumPoints[3] =  nearPlanePoints_[3];
 	//far
-	FrustumPoints[4] = viewingFrustum.translation_ + farPlanePoints_[0];
-	FrustumPoints[5] = viewingFrustum.translation_ + farPlanePoints_[1];
-	FrustumPoints[6] = viewingFrustum.translation_ + farPlanePoints_[2];
-	FrustumPoints[7] = viewingFrustum.translation_ + farPlanePoints_[3];
+	FrustumPoints[4] =  farPlanePoints_[0];
+	FrustumPoints[5] =  farPlanePoints_[1];
+	FrustumPoints[6] =  farPlanePoints_[2];
+	FrustumPoints[7] =  farPlanePoints_[3];
 
 	/*ステップ2 球の生成*/
+
 	Vector3 SpherePoint = sp.center;
 
 	Matrix4x4 FrustumInverceMat = mat->Inverce(FrustumMatWorld);
@@ -1412,7 +1413,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		//DrawLine(segment_.origin, segment_.diff, viewProjectionMatrix, viewportMatrix, WHITE);
 
-		DrawPlane(plane, viewProjectionMatrix, viewportMatrix, plane.color);
+		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, plane.color);
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
 		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
@@ -1429,7 +1430,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
 		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);*/
-		DrawSphere(Sphere{ ball.position,ball.radius,ball.color }, viewProjectionMatrix, viewportMatrix);
+		//DrawSphere(Sphere{ ball.position,ball.radius,ball.color }, viewProjectionMatrix, viewportMatrix);
 
 		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangle.color);
 		if(isDrawFrustum){
