@@ -1186,35 +1186,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	float cameraLength = -8.0f;
 
-	Spring spring{
-		.anchor = {0.0f,1.0f,0.0f},
-		.naturalLength = 0.7f,
-		.stiffness = 100.0f,
-		.dampingCoefficient=2.0f
-	};
-
 	Ball ball = {
 		.position = {0.8f,1.2f,0.3f},
 		.mass = 2.0f,
 		.radius = 0.05f,
 		.color = WHITE,
 		
-	};
-
-	Pendulum pendulum = {
-		.anchor = {0.0f,1.0f,0.0f},
-		.length = 0.8f,
-		.angle = 0.7f,
-		.angularVelocity = 0.0f,
-		.angularAcceleration = 0.0f
-	};
-
-	ConicalPendulum conicalPendulum = {
-		.anchor = {0.0f,1.0f,0.0f},
-		.length = 0.8f,
-		.harfApexAngle = 0.7f,
-		.angle = 0.0f,
-		.angularVelocity = 0.0f
 	};
 
 	viewingFrustum viewingFrustum_ = {
@@ -1243,8 +1220,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	bool isDrawFrustum = false;
 
-	Vector3 beforePosition = {};
-	Vector3 afterPosition = {};
+	bool isDrawWall = false;
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -1314,8 +1291,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
-		beforePosition = ball.position;
-
 		Matrix4x4 rotateMatrix = matrix_->MakeRotateMatrix(rotate);
 		for (int i = 0; i < 3; i++){
 			obb.orientations[i].x = rotateMatrix.m[i][0];
@@ -1353,29 +1328,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			ImGui::End();
 
 		}
-		ImGui::Begin("Button");
 
-		if (ImGui::Button("MoveStart")){
-			ball.acceleration = { 0.0f,-4.9f,0.0f };
-		}
-		ImGui::Text("\n");
-		if (ImGui::Button("PositionSet")){
-			ball.position = { 0.8f,1.2f,0.3f };
-			ball.acceleration = { 0 };
-			ball.velocity = { 0 };
-		}
-		ball.velocity += ball.acceleration * deltaTime;
-		ball.position += ball.velocity * deltaTime;
-		afterPosition = ball.position;
-
-		capsule.segment.origin = beforePosition;
-		capsule.segment.diff = afterPosition - beforePosition;
-		capsule.radius = ball.radius;
-
-
-		if (IsCollisionCapsulePlane(capsule,plane)){
-			ball.velocity = Reflect(ball.velocity, plane.normal) * 0.8f;
-		}
 		
 		if (IsCollisionOBBViewFrustum(obb,viewingFrustum_)){
 			obb.color = RED;
@@ -1390,7 +1343,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			sphere.color = WHITE;
 		}
-		ImGui::End();
 
 		///
 		/// ↑更新処理ここまで
@@ -1402,37 +1354,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
-		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 		if (isDrawOBB){
 			DrawOBB(obb, viewProjectionMatrix, viewportMatrix, obb.color);
 		}
 		if (isDrawSphere){
 			DrawSphere(sphere, viewProjectionMatrix, viewportMatrix);
 		}
-		//DrawLine(pendulum.anchor, sphere.center, viewProjectionMatrix, viewportMatrix, WHITE);
-		
-		//DrawLine(segment_.origin, segment_.diff, viewProjectionMatrix, viewportMatrix, WHITE);
-
-		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, plane.color);
-		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
-			viewProjectionMatrix, viewportMatrix, lineColor);*/
-		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);*/
-
-
-		/*DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
-
-		DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
-		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);*/
-		//DrawSphere(Sphere{ ball.position,ball.radius,ball.color }, viewProjectionMatrix, viewportMatrix);
-
-		//DrawTriangle(triangle, viewProjectionMatrix, viewportMatrix, triangle.color);
 		if(isDrawFrustum){
 			DrawViewingFrustum(viewingFrustum_, viewProjectionMatrix, viewportMatrix, BLACK);
 		}
