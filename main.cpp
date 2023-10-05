@@ -73,7 +73,7 @@ void DrawLine(const Vector3& start, const Vector3& end, const Matrix4x4& viewPro
 }
 
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix) {
-	const uint32_t kSubdivision = 16;
+	const uint32_t kSubdivision = 8;
 	const float kLatEvery = float(M_PI / kSubdivision);//緯度一つ分の角度
 	const float kLonEvery = float((M_PI * 2.0f) / kSubdivision);//経度一つ分の角度
 	//緯度の方向に分割-π/2～π/2
@@ -551,6 +551,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.94f,-0.7f,2.3f},
 		{-0.53f,-0.26f,-0.15f}
 	};
+
+	std::vector<Vector3> ControlPoints;
+
+	for (int i = 0; i < 4; i++)
+	{
+		ControlPoints.push_back(controlPoints[i]);
+	}
+	
+
 	//uint32_t lineColor = BLUE;
 
 	uint32_t Linecolor = WHITE;
@@ -587,27 +596,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.color = RED
 	};
 
+	std::vector<Sphere> spheres;//〆切α
 
-	Sphere sphere0{
-		.center = controlPoints[0],
-		.radius = 0.01f,
-		.color = BLACK
+	Sphere sphere[4]{
+		{{0.0f},0.02f,BLACK},
+		{{0.0f},0.02f,BLACK},
+		{{0.0f},0.02f,BLACK},
+		{{0.0f},0.02f,BLACK}
 	};
-	Sphere sphere1{
-		.center = controlPoints[1],
-		.radius = 0.01f,
-		.color = BLACK
-	};
-	Sphere sphere2{
-		.center = controlPoints[2],
-		.radius = 0.01f,
-		.color = BLACK
-	};
-	Sphere sphere3{
-		.center = controlPoints[3],
-		.radius = 0.01f,
-		.color = BLACK
-	};
+
+	for (int i = 0; i < 4; i++)
+	{
+		spheres.push_back(sphere[i]);
+	}
+	
 
 	//AABB aabb1{
 	//	.min{-0.5f,-0.5f,-0.5f},
@@ -646,7 +648,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float point = 0.0f;
 	float t = 0.0f;
 
+
 	uint32_t linePass = 0;
+
+	const uint32_t firstLinePass = 0;
+	uint32_t MaxLinePass = 2;
 
 	bool isMove = false;
 	
@@ -719,51 +725,39 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
-		sphere0.center = controlPoints[0];
-		sphere1.center = controlPoints[1];
-		sphere2.center = controlPoints[2];
-		sphere3.center = controlPoints[3];
-
-		
-		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[2], controlPoints[3], controlPoints[0], controlPoints[1],
-			viewProjectionMatrix, viewportMatrix, lineColor);*/
+		for (size_t i = 0; i < ControlPoints.size(); ++i){
+			spheres[i].center = ControlPoints[i];
+		}
 
 		if (isMove){
-			point += 0.2f;
+			point += 0.1f;
 		}
-		if (point> static_cast<float>(divisionNumber)){
+		if (point > static_cast<float>(divisionNumber) - 0.1f) {
 			point = 0.0f;
 			linePass += 1;
-			if (linePass>3){
+			if (linePass>MaxLinePass){
 				linePass = 0;
 			}
 		}
 
 		t = point / static_cast<float>(divisionNumber);
 
-		if (linePass == 0) {
-			Vector3 p = vec_->makeCatmullRom(sphere0.center, sphere1.center, sphere2.center, sphere3.center, t);
-			PLsphere.center = p;
-		}else if (linePass == 1){
-			Vector3 p = vec_->makeCatmullRom(sphere1.center, sphere2.center, sphere3.center, sphere0.center, t);
-			PLsphere.center = p;
-		}else if (linePass == 2){
-			Vector3 p = vec_->makeCatmullRom(sphere2.center, sphere3.center, sphere0.center, sphere1.center, t);
-			PLsphere.center = p;
-		}else if (linePass == 3){
-			Vector3 p = vec_->makeCatmullRom(sphere3.center, sphere0.center, sphere1.center, sphere2.center, t);
-			PLsphere.center = p;
+		for (uint32_t i = 0; i < MaxLinePass; i++){
+
+
+			if (linePass == 0) {
+				Vector3 p = vec_->makeCatmullRom(spheres[0].center, spheres[0].center, spheres[1].center, spheres[2].center, t);
+				PLsphere.center = p;
+			}
+			else if (linePass == 1) {
+				Vector3 p = vec_->makeCatmullRom(spheres[0].center, spheres[1].center, spheres[2].center, spheres[3].center, t);
+				PLsphere.center = p;
+			}
+			else if (linePass == 2) {
+				Vector3 p = vec_->makeCatmullRom(spheres[1].center, spheres[2].center, spheres[3].center, spheres[3].center, t);
+				PLsphere.center = p;
+			}
 		}
-
-
-
-		
 
 
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
@@ -772,18 +766,40 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			triangle.color = WHITE;
 		}*/
-		ImGui::Begin("Bezier");
-		ImGui::DragFloat3("controlPoint0", &controlPoints[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1", &controlPoints[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2", &controlPoints[2].x, 0.01f);
-		ImGui::DragFloat3("controlPoint3", &controlPoints[3].x, 0.01f);
+		ImGui::Begin("Catmull-Rom");
+		for (size_t i = 0; i < ControlPoints.size(); ++i){
+			ImGui::DragFloat3(("Points" + std::to_string(i)).c_str(), &ControlPoints[i].x, 0.01f);
+		}
+		
+
 		ImGui::End();
+
+		ImGui::Begin("MakeCatmull-Rom");
+		if (ImGui::Button("Add Element")) {
+			Vector3 newPoint = { 0.0f };
+			Sphere newSphere = {
+				.center = newPoint,
+				.radius = 0.01f,
+				.color = BLACK
+			};
+
+			MaxLinePass++;
+
+			ControlPoints.push_back(newPoint);
+			spheres.push_back(newSphere);
+		}
+		ImGui::End();
+
 
 		ImGui::Begin("PL");
 		ImGui::DragFloat("point", &point, 0.01f);
 		ImGui::Checkbox("StartMove", &isMove);
 		ImGui::End();
 		
+		ImGui::Begin("FPS");
+		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+		ImGui::End();
+
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
 		}
@@ -812,20 +828,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
-		DrawCatmullRom(controlPoints[3], controlPoints[0], controlPoints[1], controlPoints[2],
+		DrawCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
+		DrawCatmullRom(ControlPoints[0], ControlPoints[1], ControlPoints[2], ControlPoints[3],
 			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[0],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[2], controlPoints[3], controlPoints[0], controlPoints[1],
+		DrawCatmullRom(ControlPoints[1], ControlPoints[2], ControlPoints[3], ControlPoints[3],
 			viewProjectionMatrix, viewportMatrix, lineColor);
 
-
-		DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
+		for (size_t i = 0; i < spheres.size(); ++i) {
+			DrawSphere(spheres[i], viewProjectionMatrix, viewportMatrix);
+		}
 
 		DrawSphere(PLsphere, viewProjectionMatrix, viewportMatrix);
 

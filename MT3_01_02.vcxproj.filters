@@ -113,5 +113,6 @@
     <ClInclude Include="C:\KamataEngine\DirectXGame\2d\ImGuiManager.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Vector.h" />
+    <ClInclude Include="main.h" />
   </ItemGroup>
 </Project>
