@@ -536,6 +536,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	std::unique_ptr<Vector> vec_ = std::make_unique<Vector>();
 
+	uint32_t lineColor = BLUE;
 
 	Vector3 cameraTransform = { 0.0f,0.0f,0.0f };
 	Vector3 cameraRotate = { 0.26f,0.0f,0.0f };
@@ -544,12 +545,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	triangle.vertices[1] = { 0.0f,1.0f,0.0f };
 	triangle.vertices[2] = { 1.0f,0.0f,0.0f };*/
 		
-	/*Vector3 controlPoints[4] = {
+	Vector3 controlPoints[4] = {
 		{-0.8f,0.58f,1.0f},
 		{1.76f,1.0f,-0.3f},
 		{0.94f,-0.7f,2.3f},
 		{-0.53f,-0.26f,-0.15f}
-	};*/
+	};
 	//uint32_t lineColor = BLUE;
 
 	uint32_t Linecolor = WHITE;
@@ -562,7 +563,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		WHITE
 	};*/
 
-	Vector3 translates[3] = {
+	/*Vector3 translates[3] = {
 		{0.2f,1.0f,0.0f},
 		{0.4f,0.0f,0.0f},
 		{0.3f,0.0f,0.0f}
@@ -578,30 +579,41 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{1.0f,1.0f,1.0f},
 		{1.0f,1.0f,1.0f},
 		{1.0f,1.0f,1.0f}
+	};*/
+
+	Sphere PLsphere{
+		.center = controlPoints[0],
+		.radius = 0.05f,
+		.color = RED
 	};
 
 
 	Sphere sphere0{
-		.center = translates[0],
-		.radius = 0.1f,
-		.color = RED
+		.center = controlPoints[0],
+		.radius = 0.01f,
+		.color = BLACK
 	};
 	Sphere sphere1{
-		.center = translates[1],
-		.radius = 0.1f,
-		.color = GREEN
+		.center = controlPoints[1],
+		.radius = 0.01f,
+		.color = BLACK
 	};
 	Sphere sphere2{
-		.center = translates[2],
-		.radius = 0.1f,
-		.color = BLUE
+		.center = controlPoints[2],
+		.radius = 0.01f,
+		.color = BLACK
+	};
+	Sphere sphere3{
+		.center = controlPoints[3],
+		.radius = 0.01f,
+		.color = BLACK
 	};
 
-	AABB aabb1{
-		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.5f,0.5f,0.5f},
-		.color = WHITE
-	};
+	//AABB aabb1{
+	//	.min{-0.5f,-0.5f,-0.5f},
+	//	.max{0.5f,0.5f,0.5f},
+	//	.color = WHITE
+	//};
 	
 	/*AABB aabb2{
 		.min{0.2f,0.2f,0.2f},
@@ -609,24 +621,34 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.color = WHITE
 	};*/
 
-	Segment segment_{ 
+	/*Segment segment_{ 
 		{-0.7f,0.3f,0.0f},
-		{2.0f,-0.5f,0.0f} };
+		{2.0f,-0.5f,0.0f} };*/
 
 	Vector3 rotate{ 0.0f,0.0f,0.0f };
 
-	OBB obb{
+	/*OBB obb{
 		.center{-1.0f,0.0f,0.0f},
 		.orientations = {{1.0f,0.0f,0.0f},
 						 {0.0f,1.0f,0.0f},
 						 {0.0f,0.0f,1.0f}},
 		.size{0.5f,0.5f,0.5f},
 		.color=WHITE
-	};
+	};*/
 
 	Vector2 localCameraPos{ 0.0f,0.0f };
 
 	float cameraLength = -8.0f;
+
+	//キャトムル-ロム移動用
+	//分割数
+	const uint32_t divisionNumber = 8;
+	float point = 0.0f;
+	float t = 0.0f;
+
+	uint32_t linePass = 0;
+
+	bool isMove = false;
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -697,16 +719,70 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
-		Matrix4x4 shoulderLocalMatrix = matrix_->MakeAffineMatrix(scales[0], rotates[0], translates[0]);
-		Matrix4x4 elbowLocalMatrix = matrix_->MakeAffineMatrix(scales[1], rotates[1], translates[1]);
-		Matrix4x4 handLocalMatrix = matrix_->MakeAffineMatrix(scales[2], rotates[2], translates[2]);
+		sphere0.center = controlPoints[0];
+		sphere1.center = controlPoints[1];
+		sphere2.center = controlPoints[2];
+		sphere3.center = controlPoints[3];
 
-		Matrix4x4 shoulderWorldMatrix = shoulderLocalMatrix;
-		Matrix4x4 elbowWorldMatrix = matrix_->Multiply(elbowLocalMatrix, shoulderWorldMatrix);
-		Matrix4x4 handWorldMatrix = matrix_->Multiply(handLocalMatrix, elbowWorldMatrix);
-		sphere0.center = { shoulderWorldMatrix.m[3][0],shoulderWorldMatrix.m[3][1], shoulderWorldMatrix.m[3][2] };
-		sphere1.center = { elbowWorldMatrix.m[3][0],elbowWorldMatrix.m[3][1], elbowWorldMatrix.m[3][2] };
-		sphere2.center = { handWorldMatrix.m[3][0],handWorldMatrix.m[3][1], handWorldMatrix.m[3][2] };
+		
+		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
+			viewProjectionMatrix, viewportMatrix, lineColor);
+		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
+			viewProjectionMatrix, viewportMatrix, lineColor);
+		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[3],
+			viewProjectionMatrix, viewportMatrix, lineColor);
+		DrawCatmullRom(controlPoints[2], controlPoints[3], controlPoints[0], controlPoints[1],
+			viewProjectionMatrix, viewportMatrix, lineColor);*/
+
+		if (isMove){
+			point += 0.2f;
+		}
+		if (point> static_cast<float>(divisionNumber)){
+			point = 0.0f;
+			linePass += 1;
+			if (linePass>3){
+				linePass = 0;
+			}
+		}
+
+		t = point / static_cast<float>(divisionNumber);
+
+		if (linePass == 0) {
+			Vector3 p = vec_->makeCatmullRom(sphere0.center, sphere1.center, sphere2.center, sphere3.center, t);
+			PLsphere.center = p;
+		}else if (linePass == 1){
+			Vector3 p = vec_->makeCatmullRom(sphere1.center, sphere2.center, sphere3.center, sphere0.center, t);
+			PLsphere.center = p;
+		}else if (linePass == 2){
+			Vector3 p = vec_->makeCatmullRom(sphere2.center, sphere3.center, sphere0.center, sphere1.center, t);
+			PLsphere.center = p;
+		}else if (linePass == 3){
+			Vector3 p = vec_->makeCatmullRom(sphere3.center, sphere0.center, sphere1.center, sphere2.center, t);
+			PLsphere.center = p;
+		}
+
+
+
+		
+
+
+		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
+			triangle.color = RED;
+		}
+		else {
+			triangle.color = WHITE;
+		}*/
+		ImGui::Begin("Bezier");
+		ImGui::DragFloat3("controlPoint0", &controlPoints[0].x, 0.01f);
+		ImGui::DragFloat3("controlPoint1", &controlPoints[1].x, 0.01f);
+		ImGui::DragFloat3("controlPoint2", &controlPoints[2].x, 0.01f);
+		ImGui::DragFloat3("controlPoint3", &controlPoints[3].x, 0.01f);
+		ImGui::End();
+
+		ImGui::Begin("PL");
+		ImGui::DragFloat("point", &point, 0.01f);
+		ImGui::Checkbox("StartMove", &isMove);
+		ImGui::End();
 		
 		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
 			triangle.color = RED;
@@ -714,17 +790,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		else {
 			triangle.color = WHITE;
 		}*/
-		ImGui::Begin("Translates");
-		ImGui::DragFloat3("controlPoint0.translates", &translates[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint0.rotate", &rotates[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint0.scale", &scales[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1", &translates[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1.rotate", &rotates[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint1.scale", &scales[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2", &translates[2].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2.rotate", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("controlPoint2.scale", &scales[2].x, 0.01f);
-		ImGui::End();
+		
 
 
 
@@ -736,7 +802,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		
-		DrawGrid(viewProjectionMatrix, viewportMatrix);
+		//DrawGrid(viewProjectionMatrix, viewportMatrix);
 
 		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
@@ -746,20 +812,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
-		/*DrawCatmullRom(controlPoints[0], controlPoints[0], controlPoints[1], controlPoints[2],
+		DrawCatmullRom(controlPoints[3], controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);
 		DrawCatmullRom(controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3],
 			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);*/
+		DrawCatmullRom(controlPoints[1], controlPoints[2], controlPoints[3], controlPoints[0],
+			viewProjectionMatrix, viewportMatrix, lineColor);
+		DrawCatmullRom(controlPoints[2], controlPoints[3], controlPoints[0], controlPoints[1],
+			viewProjectionMatrix, viewportMatrix, lineColor);
 
 
 		DrawSphere(sphere0, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere1, viewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere2, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
 
-		DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
-		DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);
+		DrawSphere(PLsphere, viewProjectionMatrix, viewportMatrix);
+
+		//DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
+		//DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);
 		//DrawSphere(sphere3, viewProjectionMatrix, viewportMatrix);
 		//DrawPlane(plane, viewProjectionMatrix, viewportMatrix, WHITE);
 
