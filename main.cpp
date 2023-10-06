@@ -2,6 +2,9 @@
 #include "AxisIndicator.h"
 #include<imgui.h>
 #include<algorithm>
+#include<fstream>
+#include<iostream>
+#include<nlohmann/json.hpp>
 
 const char kWindowTitle[] = "LE2A_20_ムラカミ_アオイ";
 
@@ -649,12 +652,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float t = 0.0f;
 
 
-	uint32_t linePass = 0;
+	int linePass = 0;
 
-	const uint32_t firstLinePass = 0;
-	uint32_t MaxLinePass = 2;
+	const int firstLinePass = 0;
+	int LastLinePass = 2;
 
 	bool isMove = false;
+
+	using json = nlohmann::json;
+
+	const std::string kDirectoryPath = "Elements/";
+	
+	const std::string kDirectoryName = "Elements";
+
+	const std::string kItemName = "Points";
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -735,43 +746,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		if (point > static_cast<float>(divisionNumber) - 0.1f) {
 			point = 0.0f;
 			linePass += 1;
-			if (linePass>MaxLinePass){
-				linePass = 0;
+			if (linePass > LastLinePass) {
+				linePass = firstLinePass;
 			}
 		}
 
 		t = point / static_cast<float>(divisionNumber);
 
-		for (uint32_t i = 0; i < MaxLinePass; i++){
 
 
-			if (linePass == 0) {
-				Vector3 p = vec_->makeCatmullRom(spheres[0].center, spheres[0].center, spheres[1].center, spheres[2].center, t);
-				PLsphere.center = p;
-			}
-			else if (linePass == 1) {
-				Vector3 p = vec_->makeCatmullRom(spheres[0].center, spheres[1].center, spheres[2].center, spheres[3].center, t);
-				PLsphere.center = p;
-			}
-			else if (linePass == 2) {
-				Vector3 p = vec_->makeCatmullRom(spheres[1].center, spheres[2].center, spheres[3].center, spheres[3].center, t);
-				PLsphere.center = p;
-			}
+		if (linePass == 0) {
+			Vector3 p = vec_->makeCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2], t);
+			PLsphere.center = p;
+		}
+		if (linePass >= 1&& linePass != LastLinePass) {
+			Vector3 p = vec_->makeCatmullRom(ControlPoints[linePass - 1], ControlPoints[linePass], ControlPoints[linePass + 1], ControlPoints[linePass + 2], t);
+			PLsphere.center = p;
+		}
+		if (linePass == LastLinePass) {
+			Vector3 p = vec_->makeCatmullRom(ControlPoints[LastLinePass - 1], ControlPoints[LastLinePass], ControlPoints[LastLinePass + 1], ControlPoints[LastLinePass+1], t);
+			PLsphere.center = p;
 		}
 
 
-		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
-			triangle.color = RED;
-		}
-		else {
-			triangle.color = WHITE;
-		}*/
 		ImGui::Begin("Catmull-Rom");
 		for (size_t i = 0; i < ControlPoints.size(); ++i){
 			ImGui::DragFloat3(("Points" + std::to_string(i)).c_str(), &ControlPoints[i].x, 0.01f);
 		}
-		
-
 		ImGui::End();
 
 		ImGui::Begin("MakeCatmull-Rom");
@@ -783,11 +784,60 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				.color = BLACK
 			};
 
-			MaxLinePass++;
+			LastLinePass++;
 
 			ControlPoints.push_back(newPoint);
 			spheres.push_back(newSphere);
 		}
+		if (ImGui::Button("Delete Element")) {
+			if (!ControlPoints.empty() && !spheres.empty()) {
+				LastLinePass--;
+
+				ControlPoints.erase(ControlPoints.begin());
+				spheres.erase(spheres.begin());
+			}
+		}
+		if (ImGui::Button("Save Element")){
+			//曲線保存用
+			nlohmann::json jsonVector(json::array({ ControlPoints[0].x,ControlPoints[0].y, ControlPoints[0].z }));
+
+			json root;
+
+			root = json::object();
+
+			root[kDirectoryName] = json::object();
+
+			for (size_t i = 0; i < ControlPoints.size(); ++i) {
+				root[kDirectoryName][kItemName][i] = json::array({ControlPoints[i].x,ControlPoints[i].y, ControlPoints[i].z});
+
+
+				std::filesystem::path dir(kDirectoryPath);
+				if (!std::filesystem::exists(kDirectoryName)) {
+					std::filesystem::create_directory(kDirectoryName);
+				}
+				// 書き込むjsonファイルのフルパスを合成する
+				std::string filePath = kDirectoryPath + "Points" + ".json";
+				// 書き込み用ファイルストリーム
+				std::ofstream ofs;
+				// ファイルを書き込みように開く
+				ofs.open(filePath);
+				//ファイルオープン失敗
+				if (ofs.fail()) {
+					std::string message = "Failed open data file for write.";
+					MessageBoxA(nullptr, message.c_str(), "Element", 0);
+					assert(0);
+					break;
+				}
+				//ファイルにjson文字列を書き込む(インデント幅4)
+				ofs << std::setw(4) << root << std::endl;
+				//ファイルを閉じる
+				ofs.close();
+			}
+			std::string message = std::format("{}.json saved.", "Points");
+			MessageBoxA(nullptr, message.c_str(), "Element", 0);
+
+		}
+
 		ImGui::End();
 
 
@@ -799,15 +849,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("FPS");
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 		ImGui::End();
-
-		/*if (IsCollision(triangle,segment_,viewProjectionMatrix,viewportMatrix)){
-			triangle.color = RED;
-		}
-		else {
-			triangle.color = WHITE;
-		}*/
-		
-
 
 
 		///
@@ -830,9 +871,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
 		DrawCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(ControlPoints[0], ControlPoints[1], ControlPoints[2], ControlPoints[3],
-			viewProjectionMatrix, viewportMatrix, lineColor);
-		DrawCatmullRom(ControlPoints[1], ControlPoints[2], ControlPoints[3], ControlPoints[3],
+		for (int i = 1; i < LastLinePass; i++){
+			DrawCatmullRom(ControlPoints[i - 1], ControlPoints[i], ControlPoints[i + 1], ControlPoints[i + 2],
+				viewProjectionMatrix, viewportMatrix, lineColor);
+		}
+
+		DrawCatmullRom(ControlPoints[LastLinePass - 1], ControlPoints[LastLinePass], ControlPoints[LastLinePass + 1], ControlPoints[LastLinePass + 1],
 			viewProjectionMatrix, viewportMatrix, lineColor);
 
 		for (size_t i = 0; i < spheres.size(); ++i) {
