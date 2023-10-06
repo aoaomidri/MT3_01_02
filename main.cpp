@@ -4,7 +4,7 @@
 #include<algorithm>
 #include<fstream>
 #include<iostream>
-#include<nlohmann/json.hpp>
+
 
 const char kWindowTitle[] = "LE2A_20_ムラカミ_アオイ";
 
@@ -799,16 +799,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		if (ImGui::Button("Save Element")){
 			//曲線保存用
-			nlohmann::json jsonVector(json::array({ ControlPoints[0].x,ControlPoints[0].y, ControlPoints[0].z }));
-
 			json root;
 
 			root = json::object();
 
-			root[kDirectoryName] = json::object();
-
 			for (size_t i = 0; i < ControlPoints.size(); ++i) {
-				root[kDirectoryName][kItemName][i] = json::array({ControlPoints[i].x,ControlPoints[i].y, ControlPoints[i].z});
+				root[kItemName][i] = json::array({ControlPoints[i].x,ControlPoints[i].y, ControlPoints[i].z});
 
 
 				std::filesystem::path dir(kDirectoryPath);
@@ -816,7 +812,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					std::filesystem::create_directory(kDirectoryName);
 				}
 				// 書き込むjsonファイルのフルパスを合成する
-				std::string filePath = kDirectoryPath + "Points" + ".json";
+				std::string filePath = kDirectoryPath + kItemName + ".json";
 				// 書き込み用ファイルストリーム
 				std::ofstream ofs;
 				// ファイルを書き込みように開く
@@ -837,6 +833,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			MessageBoxA(nullptr, message.c_str(), "Element", 0);
 
 		}
+		/*if (ImGui::Button("Load Element")){
+			LoadFiles();
+		}*/
 
 		ImGui::End();
 
@@ -859,7 +858,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		
-		//DrawGrid(viewProjectionMatrix, viewportMatrix);
+		DrawGrid(viewProjectionMatrix, viewportMatrix);
 
 		//DrawAABB(aabb1,viewProjectionMatrix, viewportMatrix, aabb1.color);
 
@@ -907,4 +906,82 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ライブラリの終了
 	Novice::Finalize();
 	return 0;
+}
+
+void LoadFiles() {
+	const std::string kDirectoryPath_ = "Elements/";
+
+	if (!std::filesystem::exists(kDirectoryPath_)) {
+		std::string message = "Failed open data file for write.";
+		MessageBoxA(nullptr, message.c_str(), "Element", 0);
+		assert(0);
+		return;
+	}
+
+	std::filesystem::directory_iterator dir_it(kDirectoryPath_);
+
+	for (const std::filesystem::directory_entry& entry : dir_it) {
+		//ファイルパスを取得
+		const std::filesystem::path& filePath = entry.path();
+
+		//ファイル拡張子を取得
+		std::string extension = filePath.extension().string();
+		//.jsonファイル以外はスキップ
+		if (extension.compare(".json") != 0) {
+			continue;
+		}
+
+		//ファイル読み込み
+		LoadFile(filePath.stem().string());
+	}
+
+}
+
+void LoadFile(const std::string& groupName) {
+	const std::string kDirectoryPath = "Elements/";
+
+	const std::string kItemName = "Points";
+
+	std::vector<Vector3> myVector;
+
+	//読み込むjsonファイルのフルパスを合成する
+	std::string filePath = kDirectoryPath + groupName + ".json";
+	//読み込み用のファイルストリーム
+	std::ifstream ifs;
+	//ファイルを読み込み用に開く
+	ifs.open(filePath);
+	// ファイルオープン失敗
+	if (ifs.fail()) {
+		std::string message = "Failed open data file for write.";
+		MessageBoxA(nullptr, message.c_str(), "Adjustment_Item", 0);
+		assert(0);
+		return;
+	}
+	nlohmann::json root;
+
+	//json文字列からjsonのデータ構造に展開
+	ifs >> root;
+	//ファイルを閉じる
+	ifs.close();
+	//グループを検索
+	nlohmann::json::iterator itGroup = root.find(kItemName);
+	//未登録チェック
+	assert(itGroup != root.end());
+
+	//各アイテムについて
+	for (const auto& root_ : root[kItemName]) {
+		Vector3 v{};
+
+		from_json(root_, v);
+
+		myVector.push_back(v);
+
+	}
+
+}
+
+void from_json(const nlohmann::json& j, Vector3& v) {
+	v.x = j.at(0).get<float>();
+	v.y = j.at(1).get<float>();
+	v.z = j.at(2).get<float>();
 }

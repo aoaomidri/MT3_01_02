@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include"Matrix.h"
 #include<memory>
+#include<nlohmann/json.hpp>
 
 
 struct Sphere{
@@ -90,3 +91,8 @@ Vector3 Project(const Vector3& v1, const Vector3& v2);
 
 Vector3 ClosestPoint(const Vector3& point, const Segment& segment);
 
+void LoadFiles();
+
+void LoadFile(const std::string& groupName);
+
+void from_json(const nlohmann::json& j, Vector3& v);
