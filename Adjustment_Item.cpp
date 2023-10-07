@@ -1,5 +1,4 @@
 ﻿#include "Adjustment_Item.h"
-#include "Adjustment_Item.h"
 #include<nlohmann/json.hpp>
 #include<fstream>
 #include"WinApp.h"

@@ -41,7 +41,7 @@
     <ClCompile Include="Vector.cpp">
       <Filter>KamataEngine</Filter>
     </ClCompile>
-    <ClCompile Include="Adjustment_Item.cpp">
+    <ClCompile Include="MakeLine.cpp">
       <Filter>KamataEngine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,6 +119,6 @@
     <ClInclude Include="main.h" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="nlohmann\json_fwd.hpp" />
-    <ClInclude Include="Adjustment_Item.h" />
+    <ClInclude Include="MakeLine.h" />
   </ItemGroup>
 </Project>

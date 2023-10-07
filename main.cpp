@@ -4,7 +4,7 @@
 #include<algorithm>
 #include<fstream>
 #include<iostream>
-
+#include"MakeLine.h"
 
 const char kWindowTitle[] = "LE2A_20_ムラカミ_アオイ";
 
@@ -539,6 +539,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	std::unique_ptr<Vector> vec_ = std::make_unique<Vector>();
 
+	std::unique_ptr<MakeLine> makeLine_ = std::make_unique<MakeLine>();
+
+	makeLine_->Initialize();
+
+
 	uint32_t lineColor = BLUE;
 
 	Vector3 cameraTransform = { 0.0f,0.0f,0.0f };
@@ -548,19 +553,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	triangle.vertices[1] = { 0.0f,1.0f,0.0f };
 	triangle.vertices[2] = { 1.0f,0.0f,0.0f };*/
 		
-	Vector3 controlPoints[4] = {
-		{-0.8f,0.58f,1.0f},
-		{1.76f,1.0f,-0.3f},
-		{0.94f,-0.7f,2.3f},
-		{-0.53f,-0.26f,-0.15f}
-	};
-
-	std::vector<Vector3> ControlPoints;
-
-	for (int i = 0; i < 4; i++)
-	{
-		ControlPoints.push_back(controlPoints[i]);
-	}
 	
 
 	//uint32_t lineColor = BLUE;
@@ -592,27 +584,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{1.0f,1.0f,1.0f},
 		{1.0f,1.0f,1.0f}
 	};*/
-
-	Sphere PLsphere{
-		.center = controlPoints[0],
-		.radius = 0.05f,
-		.color = RED
-	};
-
-	std::vector<Sphere> spheres;//〆切α
-
-	Sphere sphere[4]{
-		{{0.0f},0.02f,BLACK},
-		{{0.0f},0.02f,BLACK},
-		{{0.0f},0.02f,BLACK},
-		{{0.0f},0.02f,BLACK}
-	};
-
-	for (int i = 0; i < 4; i++)
-	{
-		spheres.push_back(sphere[i]);
-	}
 	
+
 
 	//AABB aabb1{
 	//	.min{-0.5f,-0.5f,-0.5f},
@@ -736,114 +709,114 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewportMatrix = matrix_->MakeViewportMatrix(0, 0, 1280.0f, 720.0f, 0.0f, 1.0f);
 
 		//メインの処理を書きこむ
-		for (size_t i = 0; i < ControlPoints.size(); ++i){
-			spheres[i].center = ControlPoints[i];
-		}
 
-		if (isMove){
-			point += 0.1f;
-		}
-		if (point > static_cast<float>(divisionNumber) - 0.1f) {
-			point = 0.0f;
-			linePass += 1;
-			if (linePass > LastLinePass) {
-				linePass = firstLinePass;
-			}
-		}
-
-		t = point / static_cast<float>(divisionNumber);
+		makeLine_->Update();
 
 
+		//if (isMove){
+		//	point += 0.1f;
+		//}
+		//if (point > static_cast<float>(divisionNumber) - 0.1f) {
+		//	point = 0.0f;
+		//	linePass += 1;
+		//	if (linePass > LastLinePass) {
+		//		linePass = firstLinePass;
+		//	}
+		//}
 
-		if (linePass == 0) {
-			Vector3 p = vec_->makeCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2], t);
-			PLsphere.center = p;
-		}
-		if (linePass >= 1&& linePass != LastLinePass) {
-			Vector3 p = vec_->makeCatmullRom(ControlPoints[linePass - 1], ControlPoints[linePass], ControlPoints[linePass + 1], ControlPoints[linePass + 2], t);
-			PLsphere.center = p;
-		}
-		if (linePass == LastLinePass) {
-			Vector3 p = vec_->makeCatmullRom(ControlPoints[LastLinePass - 1], ControlPoints[LastLinePass], ControlPoints[LastLinePass + 1], ControlPoints[LastLinePass+1], t);
-			PLsphere.center = p;
-		}
-
-
-		ImGui::Begin("Catmull-Rom");
-		for (size_t i = 0; i < ControlPoints.size(); ++i){
-			ImGui::DragFloat3(("Points" + std::to_string(i)).c_str(), &ControlPoints[i].x, 0.01f);
-		}
-		ImGui::End();
-
-		ImGui::Begin("MakeCatmull-Rom");
-		if (ImGui::Button("Add Element")) {
-			Vector3 newPoint = { 0.0f };
-			Sphere newSphere = {
-				.center = newPoint,
-				.radius = 0.01f,
-				.color = BLACK
-			};
-
-			LastLinePass++;
-
-			ControlPoints.push_back(newPoint);
-			spheres.push_back(newSphere);
-		}
-		if (ImGui::Button("Delete Element")) {
-			if (!ControlPoints.empty() && !spheres.empty()) {
-				LastLinePass--;
-
-				ControlPoints.erase(ControlPoints.begin());
-				spheres.erase(spheres.begin());
-			}
-		}
-		if (ImGui::Button("Save Element")){
-			//曲線保存用
-			json root;
-
-			root = json::object();
-
-			for (size_t i = 0; i < ControlPoints.size(); ++i) {
-				root[kItemName][i] = json::array({ControlPoints[i].x,ControlPoints[i].y, ControlPoints[i].z});
+		//t = point / static_cast<float>(divisionNumber);
 
 
-				std::filesystem::path dir(kDirectoryPath);
-				if (!std::filesystem::exists(kDirectoryName)) {
-					std::filesystem::create_directory(kDirectoryName);
-				}
-				// 書き込むjsonファイルのフルパスを合成する
-				std::string filePath = kDirectoryPath + kItemName + ".json";
-				// 書き込み用ファイルストリーム
-				std::ofstream ofs;
-				// ファイルを書き込みように開く
-				ofs.open(filePath);
-				//ファイルオープン失敗
-				if (ofs.fail()) {
-					std::string message = "Failed open data file for write.";
-					MessageBoxA(nullptr, message.c_str(), "Element", 0);
-					assert(0);
-					break;
-				}
-				//ファイルにjson文字列を書き込む(インデント幅4)
-				ofs << std::setw(4) << root << std::endl;
-				//ファイルを閉じる
-				ofs.close();
-			}
-			std::string message = std::format("{}.json saved.", "Points");
-			MessageBoxA(nullptr, message.c_str(), "Element", 0);
 
-		}
-		/*if (ImGui::Button("Load Element")){
-			LoadFiles();
-		}*/
-
-		ImGui::End();
+		//if (linePass == 0) {
+		//	Vector3 p = vec_->makeCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2], t);
+		//	PLsphere.center = p;
+		//}
+		//if (linePass >= 1&& linePass != LastLinePass) {
+		//	Vector3 p = vec_->makeCatmullRom(ControlPoints[linePass - 1], ControlPoints[linePass], ControlPoints[linePass + 1], ControlPoints[linePass + 2], t);
+		//	PLsphere.center = p;
+		//}
+		//if (linePass == LastLinePass) {
+		//	Vector3 p = vec_->makeCatmullRom(ControlPoints[LastLinePass - 1], ControlPoints[LastLinePass], ControlPoints[LastLinePass + 1], ControlPoints[LastLinePass+1], t);
+		//	PLsphere.center = p;
+		//}
 
 
-		ImGui::Begin("PL");
-		ImGui::DragFloat("point", &point, 0.01f);
-		ImGui::Checkbox("StartMove", &isMove);
-		ImGui::End();
+		//ImGui::Begin("Catmull-Rom");
+		//for (size_t i = 0; i < ControlPoints.size(); ++i){
+		//	ImGui::DragFloat3(("Points" + std::to_string(i)).c_str(), &ControlPoints[i].x, 0.01f);
+		//}
+		//ImGui::End();
+
+		//ImGui::Begin("MakeCatmull-Rom");
+		//if (ImGui::Button("Add Element")) {
+		//	Vector3 newPoint = { 0.0f };
+		//	Sphere newSphere = {
+		//		.center = newPoint,
+		//		.radius = 0.01f,
+		//		.color = BLACK
+		//	};
+
+		//	LastLinePass++;
+
+		//	ControlPoints.push_back(newPoint);
+		//	spheres.push_back(newSphere);
+		//}
+		//if (ImGui::Button("Delete Element")) {
+		//	if (!ControlPoints.empty() && !spheres.empty()) {
+		//		LastLinePass--;
+
+		//		ControlPoints.erase(ControlPoints.begin());
+		//		spheres.erase(spheres.begin());
+		//	}
+		//}
+		//if (ImGui::Button("Save Element")){
+		//	//曲線保存用
+		//	json root;
+
+		//	root = json::object();
+
+		//	for (size_t i = 0; i < ControlPoints.size(); ++i) {
+		//		root[kItemName][i] = json::array({ControlPoints[i].x,ControlPoints[i].y, ControlPoints[i].z});
+
+
+		//		std::filesystem::path dir(kDirectoryPath);
+		//		if (!std::filesystem::exists(kDirectoryName)) {
+		//			std::filesystem::create_directory(kDirectoryName);
+		//		}
+		//		// 書き込むjsonファイルのフルパスを合成する
+		//		std::string filePath = kDirectoryPath + kItemName + ".json";
+		//		// 書き込み用ファイルストリーム
+		//		std::ofstream ofs;
+		//		// ファイルを書き込みように開く
+		//		ofs.open(filePath);
+		//		//ファイルオープン失敗
+		//		if (ofs.fail()) {
+		//			std::string message = "Failed open data file for write.";
+		//			MessageBoxA(nullptr, message.c_str(), "Element", 0);
+		//			assert(0);
+		//			break;
+		//		}
+		//		//ファイルにjson文字列を書き込む(インデント幅4)
+		//		ofs << std::setw(4) << root << std::endl;
+		//		//ファイルを閉じる
+		//		ofs.close();
+		//	}
+		//	std::string message = std::format("{}.json saved.", "Points");
+		//	MessageBoxA(nullptr, message.c_str(), "Element", 0);
+
+		//}
+		///*if (ImGui::Button("Load Element")){
+		//	LoadFiles();
+		//}*/
+
+		//ImGui::End();
+
+
+		//ImGui::Begin("PL");
+		//ImGui::DragFloat("point", &point, 0.01f);
+		//ImGui::Checkbox("StartMove", &isMove);
+		//ImGui::End();
 		
 		ImGui::Begin("FPS");
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
@@ -868,7 +841,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		
 		/*DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);*/
-		DrawCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2],
+
+		makeLine_->Draw(viewProjectionMatrix, viewportMatrix);
+
+		/*DrawCatmullRom(ControlPoints[0], ControlPoints[0], ControlPoints[1], ControlPoints[2],
 			viewProjectionMatrix, viewportMatrix, lineColor);
 		for (int i = 1; i < LastLinePass; i++){
 			DrawCatmullRom(ControlPoints[i - 1], ControlPoints[i], ControlPoints[i + 1], ControlPoints[i + 2],
@@ -882,7 +858,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			DrawSphere(spheres[i], viewProjectionMatrix, viewportMatrix);
 		}
 
-		DrawSphere(PLsphere, viewProjectionMatrix, viewportMatrix);
+		DrawSphere(PLsphere, viewProjectionMatrix, viewportMatrix);*/
 
 		//DrawLine(sphere0.center, sphere1.center, viewProjectionMatrix, viewportMatrix, Linecolor);
 		//DrawLine(sphere1.center, sphere2.center, viewProjectionMatrix, viewportMatrix, Linecolor);
