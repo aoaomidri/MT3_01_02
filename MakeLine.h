@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "AxisIndicator.h"
+
 #include<imgui.h>
 #include<algorithm>
 #include<fstream>
@@ -74,9 +74,9 @@ private:
 
 	using json = nlohmann::json;
 
-	const std::string kDirectoryPath = "Elements/";
+	const std::string kDirectoryPath = "Resources/Elements/";
 
-	const std::string kDirectoryName = "Elements";
+	const std::string kDirectoryName = "Resources/Elements";
 
 	const std::string kItemName = "Points";
 
